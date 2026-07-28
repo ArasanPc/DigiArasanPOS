@@ -1,0 +1,1749 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>DIGI ARASAN POS</title>
+
+    <!-- ===== App Icons (used by Chrome "Install"/"Create Shortcut") ===== -->
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="icon" type="image/png" sizes="16x16" href="icons/icon-16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="icons/icon-180.png">
+    <link rel="shortcut icon" href="favicon.ico">
+
+    <!-- ===== PWA Manifest (required for Chrome to use the logo as the shortcut/app icon) ===== -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#dc2626">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="DIGI ARASAN">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="DIGI ARASAN POS">
+    <!-- Export Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --success: #16a34a;
+            --danger: #dc2626;
+            --bg: #f1f5f9;
+            --card: #ffffff;
+            --text: #0f172a;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background: var(--bg); color: var(--text); padding-bottom: 70px; }
+
+        /* Header */
+        header { 
+            background: var(--card); padding: 12px 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); 
+            display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; 
+        }
+        .branding { display: flex; align-items: center; gap: 10px; max-width: 70%; }
+        .branding img { width: 36px; height: 36px; border-radius: 8px; object-fit: cover; border: 1px solid #cbd5e1; flex-shrink: 0; }
+        .branding h1 { font-size: 0.95rem; font-weight: 700; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .branding p { font-size: 0.7rem; color: #64748b; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+        /* Navigation Views */
+        .tab-content { display: none; padding: 10px; }
+        .tab-content.active { display: block; }
+
+        .card { background: var(--card); border-radius: 12px; padding: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 10px; }
+        h2 { font-size: 1rem; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px; }
+
+        /* Category Scroll Bar */
+        .category-bar {
+            display: flex; gap: 8px; overflow-x: auto; padding: 4px 0 10px 0; margin-bottom: 8px; align-items: center;
+            -webkit-overflow-scrolling: touch; scrollbar-width: none;
+        }
+        .category-bar::-webkit-scrollbar { display: none; }
+        .cat-chip {
+            padding: 6px 14px; border-radius: 20px; background: #e2e8f0; color: #475569;
+            font-size: 0.8rem; font-weight: 600; white-space: nowrap; cursor: pointer; border: 1px solid transparent;
+            transition: all 0.2s; display: inline-flex; align-items: center;
+        }
+        .cat-chip.active {
+            background: var(--primary); color: white; border-color: var(--primary-dark);
+        }
+
+        /* Date Filter Controls */
+        .filter-container {
+            display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; background: #f8fafc; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0;
+        }
+        .filter-row { display: flex; gap: 6px; align-items: center; }
+        .filter-select { flex: 1; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem; background: white; }
+        .custom-date-box { display: none; gap: 6px; align-items: center; }
+        .custom-date-box input { flex: 1; padding: 6px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.8rem; }
+
+        /* Analytics Dashboard Cards */
+        .analytics-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
+        .analytics-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px; text-align: center; }
+        .analytics-card h4 { font-size: 0.7rem; color: #64748b; text-transform: uppercase; }
+        .analytics-card .amount { font-size: 0.95rem; font-weight: bold; margin-top: 2px; }
+
+        .product-summary-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 6px; margin-bottom: 12px; }
+        .product-stat-card { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px; padding: 6px; font-size: 0.75rem; }
+        .product-stat-card .p-name { font-weight: bold; color: #1e40af; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+        /* Menu Grid */
+        .menu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(105px, 1fr)); gap: 8px; margin-bottom: 10px; }
+        @media(min-width: 480px) { .menu-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; } }
+        
+        .menu-item { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 8px; text-align: center; display: flex; flex-direction: column; justify-content: space-between; position: relative; }
+        .menu-item img { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; border-radius: 6px; margin-bottom: 6px; }
+        .menu-item h4 { font-size: 0.85rem; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .menu-item .cat-label { font-size: 0.65rem; color: #64748b; margin-bottom: 4px; text-transform: uppercase; }
+        .menu-item .price { font-weight: bold; color: var(--primary); font-size: 0.85rem; margin-bottom: 6px; }
+        
+        .qty-controls { display: flex; justify-content: center; align-items: center; gap: 6px; }
+        .btn-qty { min-width: 32px; height: 32px; border: none; border-radius: 6px; background: var(--primary); color: white; font-weight: bold; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .btn-qty:active { background: var(--primary-dark); transform: scale(0.95); }
+        
+        .item-actions { position: absolute; top: 4px; right: 4px; display: none; gap: 2px; background: rgba(255,255,255,0.95); border-radius: 4px; padding: 2px; box-shadow: 0 1px 3px rgba(0,0,0,0.2); z-index: 10; }
+        .show-edit-controls .item-actions { display: flex !important; }
+        .btn-icon { background: none; border: none; font-size: 0.85rem; padding: 2px 4px; cursor: pointer; }
+
+        /* Cart & Summary */
+        .cart-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 0.85rem; }
+        .cart-table th, .cart-table td { padding: 6px 4px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+        .cart-table th:last-child, .cart-table td:last-child { text-align: right; }
+
+        .bill-summary { background: #f8fafc; padding: 10px; border-radius: 8px; font-size: 0.85rem; }
+        .summary-row { display: flex; justify-content: space-between; margin-bottom: 6px; align-items: center; }
+        .summary-row label { font-weight: 500; }
+        .summary-row input { width: 90px; padding: 6px; border: 1px solid #cbd5e1; border-radius: 6px; text-align: right; font-size: 0.85rem; }
+
+        .pay-options { display: flex; gap: 6px; margin: 10px 0; }
+        .pay-option { flex: 1; padding: 8px 4px; border: 2px solid #e2e8f0; border-radius: 8px; text-align: center; cursor: pointer; font-weight: 600; font-size: 0.8rem; }
+        .pay-option.active { border-color: var(--primary); background: #eff6ff; color: var(--primary); }
+
+        .btn { width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.9rem; margin-top: 6px; transition: 0.1s; }
+        .btn:active { transform: scale(0.98); }
+        .btn-success { background: var(--success); color: white; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-secondary { background: #64748b; color: white; }
+
+        .input-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
+        .input-group input, .input-group select { padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; width: 100%; font-size: 0.9rem; background: white; }
+
+        .table-responsive { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        .history-table { width: 100%; border-collapse: collapse; min-width: 500px; font-size: 0.8rem; }
+        .history-table th, .history-table td { padding: 8px; border: 1px solid #e2e8f0; text-align: left; }
+        .history-table th { background: #f1f5f9; }
+
+        .badge { padding: 2px 6px; border-radius: 10px; font-size: 0.7rem; font-weight: bold; white-space: nowrap; }
+        .badge-cash { background: #dcfce7; color: #15803d; }
+        .badge-online { background: #e0e7ff; color: #4338ca; }
+        .badge-split { background: #fef3c7; color: #b45309; }
+
+        /* Customer Form Styles */
+        .cust-section { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; margin-top: 10px; }
+        .cust-section h4 { font-size: 0.8rem; font-weight: bold; margin-bottom: 8px; color: #475569; }
+        .cust-grid { display: flex; flex-direction: column; gap: 8px; }
+
+        /* Gender Checkbox Styling */
+        .gender-checkbox-container {
+            display: flex; gap: 15px; align-items: center; font-size: 0.85rem; color: #334155;
+            background: white; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px;
+        }
+        .gender-checkbox-container label {
+            display: flex; align-items: center; gap: 4px; cursor: pointer; user-select: none;
+        }
+
+        /* Modal Overlay */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; padding: 15px; }
+        .modal-content { background: white; padding: 16px; border-radius: 12px; width: 100%; max-width: 400px; max-height: 90vh; overflow-y: auto; }
+
+        .export-option-btn { display: flex; align-items: center; gap: 10px; width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; background: #f8fafc; font-size: 0.9rem; font-weight: bold; cursor: pointer; margin-bottom: 8px; transition: background 0.2s; }
+        .export-option-btn:hover { background: #f1f5f9; }
+
+        /* Bottom Mobile Navigation Tabs */
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; height: 60px; background: white; display: flex; border-top: 1px solid #cbd5e1; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); z-index: 100; }
+        .nav-tab { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 600; color: #64748b; background: none; border: none; cursor: pointer; }
+        .nav-tab.active { color: var(--primary); border-top: 3px solid var(--primary); }
+        .nav-tab span { font-size: 1.2rem; margin-bottom: 2px; }
+
+        /* Off-screen Export Container */
+        #export-wrapper { position: absolute; left: -9999px; top: -9999px; width: 800px; background: #ffffff; padding: 20px; font-family: sans-serif; }
+        #export-wrapper table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 12px; }
+        #export-wrapper th, #export-wrapper td { border: 1px solid #cbd5e1; padding: 8px; text-align: left; }
+        #export-wrapper th { background: #f1f5f9; }
+
+        /* Analytics Off-Screen Export Wrapper */
+        #analytics-export-wrapper { position: absolute; left: -9999px; top: -9999px; width: 800px; background: #ffffff; padding: 24px; font-family: sans-serif; }
+        #analytics-export-wrapper table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 12px; }
+        #analytics-export-wrapper th, #analytics-export-wrapper td { border: 1px solid #cbd5e1; padding: 8px; text-align: left; }
+        #analytics-export-wrapper th { background: #f1f5f9; }
+
+        /* Thermal Receipt Container */
+        #thermal-receipt { display: none; }
+
+        @media print {
+            body * { visibility: hidden; }
+            #thermal-receipt, #thermal-receipt * { visibility: visible; }
+            #thermal-receipt { display: block !important; position: absolute; left: 0; top: 0; width: 58mm; padding: 2mm; font-family: 'Courier New', Courier, monospace; font-size: 10px; color: #000; }
+            #thermal-receipt h3, #thermal-receipt p { text-align: center; margin: 2px 0; }
+            #thermal-receipt img { display: block; margin: 0 auto 4px auto; max-width: 35px; height: auto; }
+            #thermal-receipt .divider { border-bottom: 1px dashed #000; margin: 3px 0; }
+            #thermal-receipt table { width: 100%; font-size: 10px; border-collapse: collapse; }
+            #thermal-receipt table td { padding: 1px 0; }
+            #thermal-receipt table td:last-child { text-align: right; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="branding">
+            <img id="app-logo" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='40' height='40'><rect width='40' height='40' fill='%23cbd5e1'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-size='16' fill='%2364748b'>📷</text></svg>" alt="Logo">
+            <div>
+                <h1 id="app-name">My POS</h1>
+                <p id="app-slogan">Fast Mobile Billing</p>
+            </div>
+        </div>
+        <button class="btn-qty" style="width:auto; padding:0 8px; font-size:0.8rem;" onclick="openBrandingModal()">⚙️ Settings</button>
+    </header>
+
+    <!-- TAB 1: MENU -->
+    <div id="view-menu" class="tab-content active">
+        <div class="card">
+            <h2>
+                <span>Menu Items</span>
+                <button class="btn-qty" style="width:auto; padding:4px 10px; font-size:0.8rem;" onclick="toggleAddMenu()">+ Add Item</button>
+            </h2>
+
+            <!-- Category Selector Chips -->
+            <div class="category-bar" id="category-bar-container"></div>
+
+            <!-- Add/Edit Item Form -->
+            <div id="menu-form" style="display:none; margin-bottom:12px; background:#f8fafc; padding:10px; border-radius:8px; border:1px solid #e2e8f0;">
+                <input type="hidden" id="edit-item-id">
+                <div class="input-group">
+                    <input type="text" id="item-name" placeholder="Item Name">
+                    <input type="number" id="item-price" placeholder="Price (₹)" onkeydown="onlyNumbers(event)">
+                    
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <label style="font-size: 0.75rem; color:#64748b; font-weight:bold;">Category:</label>
+                        <button type="button" onclick="showInlineCategoryInput()" style="background:none; border:none; color:var(--primary); font-size:0.75rem; font-weight:bold; cursor:pointer;">+ Add Category</button>
+                    </div>
+                    
+                    <div style="display:flex; gap:6px; align-items:center;">
+                        <select id="item-category-select" style="flex:1;">
+                            <!-- Populated dynamically -->
+                        </select>
+                        <button type="button" onclick="deleteSelectedCategoryInline()" title="Delete Selected Category" style="background:#fef2f2; border:1px solid #fca5a5; color:var(--danger); font-size:0.8rem; font-weight:bold; padding:8px 10px; border-radius:6px; cursor:pointer;">🗑️ Delete</button>
+                    </div>
+
+                    <!-- Inline New Category Input Form -->
+                    <div id="inline-cat-box" style="display:none; gap:6px; margin-top:4px;">
+                        <input type="text" id="item-custom-category" placeholder="Enter New Category Name" style="font-size:0.85rem;">
+                        <button class="btn-qty" style="width:auto; padding:0 10px; font-size:0.75rem; background:var(--success);" onclick="addInlineCategory()">Add</button>
+                        <button class="btn-qty" style="width:auto; padding:0 8px; font-size:0.75rem; background:#64748b;" onclick="hideInlineCategoryInput()">Cancel</button>
+                    </div>
+
+                    <label style="font-size: 0.75rem; color:#64748b; margin-top:2px;">Upload Square Image:</label>
+                    <input type="file" id="item-image" accept="image/*" style="font-size:0.8rem;">
+                </div>
+                <button class="btn btn-primary" onclick="saveMenuItem()" style="margin-top:0;">Save Item</button>
+            </div>
+
+            <div class="menu-grid" id="menu-container"></div>
+        </div>
+    </div>
+
+    <!-- TAB 2: CURRENT ORDER -->
+    <div id="view-order" class="tab-content">
+        <div class="card">
+            <h2>
+                <span>Current Order</span>
+                <span id="next-bill-no" style="font-size: 0.8rem; color: var(--primary); font-weight: bold;">Bill #: ---</span>
+            </h2>
+            
+            <div class="table-responsive">
+                <table class="cart-table">
+                    <thead>
+                        <tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th></tr>
+                    </thead>
+                    <tbody id="cart-tbody">
+                        <tr><td colspan="4" style="text-align:center; color:#94a3b8; padding: 15px 0;">No items added</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="bill-summary">
+                <div class="summary-row">
+                    <span>Sub Total:</span>
+                    <strong id="sub-total">₹0.00</strong>
+                </div>
+                <div class="summary-row" id="discount-row">
+                    <label>Discount (%):</label>
+                    <input type="number" id="discount-pct" value="0" min="0" max="100" oninput="calculateBill()" onkeydown="onlyNumbers(event)">
+                </div>
+                <div class="summary-row" style="font-size: 1rem; font-weight:bold; color: var(--primary); margin-top: 4px;">
+                    <span>Grand Total:</span>
+                    <span id="grand-total">₹0.00</span>
+                </div>
+            </div>
+
+            <div class="pay-options">
+                <div class="pay-option active" id="pay-cash" onclick="setPaymentMode('Cash')">💵 Cash</div>
+                <div class="pay-option" id="pay-online" onclick="setPaymentMode('Online')">💳 Online</div>
+                <div class="pay-option" id="pay-split" onclick="setPaymentMode('Split')">🔄 Split</div>
+            </div>
+
+            <div id="payment-calc-box" class="bill-summary" style="margin-top: 6px;">
+                <div id="cash-mode-fields">
+                    <div class="summary-row">
+                        <label>Cash Received:</label>
+                        <input type="number" id="cash-given" placeholder="₹0" oninput="calculateBalance()" onkeydown="onlyNumbers(event)">
+                    </div>
+                    <div class="summary-row">
+                        <span>Balance:</span>
+                        <strong id="cash-balance" style="color:var(--danger);">₹0.00</strong>
+                    </div>
+                </div>
+
+                <div id="split-mode-fields" style="display:none;">
+                    <div class="summary-row">
+                        <label>Cash Part:</label>
+                        <input type="number" id="split-cash" placeholder="₹0" oninput="calculateSplit()" onkeydown="onlyNumbers(event)">
+                    </div>
+                    <div class="summary-row">
+                        <label>Online Part:</label>
+                        <input type="number" id="split-online" placeholder="₹0" readonly style="background:#e2e8f0;">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Customer Info Fields (Optional) -->
+            <div id="customer-info-container" class="cust-section">
+                <h4>👤 Customer Info (Optional)</h4>
+                <div class="cust-grid">
+                    <input type="text" id="cust-name" placeholder="Customer Name" style="padding:8px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.85rem; width:100%;">
+                    
+                    <!-- Strictly Numbers Only Phone Input -->
+                    <input type="tel" id="cust-phone" maxlength="10" placeholder="10-Digit Mobile / WhatsApp No." 
+                           onkeypress="return isOnlyDigitKey(event)" 
+                           oninput="sanitizeDigitsOnly(this)" 
+                           style="padding:8px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.85rem; width:100%;">
+                    
+                    <!-- Gender Tick Box Options -->
+                    <div class="gender-checkbox-container">
+                        <span style="font-weight: 500;">Gender:</span>
+                        <label><input type="checkbox" name="cust-gender-cb" value="Male" onclick="selectGenderCheckbox(this)"> Male</label>
+                        <label><input type="checkbox" name="cust-gender-cb" value="Female" onclick="selectGenderCheckbox(this)"> Female</label>
+                        <label><input type="checkbox" name="cust-gender-cb" value="Other" onclick="selectGenderCheckbox(this)"> Other</label>
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn btn-success" id="btn-action-whatsapp" onclick="processOrder('whatsapp')">💬 Send WhatsApp Bill</button>
+            <button class="btn btn-primary" id="btn-action-print" onclick="processOrder('print')">🖨️ Print Receipt</button>
+            <button class="btn btn-secondary" id="btn-action-save" onclick="processOrder('save')">💾 Save Bill Only</button>
+        </div>
+    </div>
+
+    <!-- TAB 3: SALE HISTORY & LIVE DASHBOARD -->
+    <div id="view-history" class="tab-content">
+        <!-- Live Analytics Card -->
+        <div class="card">
+            <h2>
+                <span>⚡ Live Analytics Dashboard</span>
+                <button class="btn-qty" style="width:auto; padding:4px 10px; font-size:0.8rem; background:var(--primary);" onclick="openAnalyticsPrintModal()">🖨️ Print / Export Analytics</button>
+            </h2>
+            
+            <!-- Date Filter Control -->
+            <div class="filter-container">
+                <div class="filter-row">
+                    <label style="font-size:0.8rem; font-weight:bold;">Period:</label>
+                    <select id="date-filter-preset" class="filter-select" onchange="handleFilterChange()">
+                        <option value="today" selected>Today</option>
+                        <option value="yesterday">Yesterday</option>
+                        <option value="this_week">This Week</option>
+                        <option value="this_month">This Month</option>
+                        <option value="prev_month">Previous Month</option>
+                        <option value="custom">Custom Date Range</option>
+                    </select>
+                </div>
+                <div id="custom-date-box" class="custom-date-box">
+                    <input type="date" id="filter-from-date" onchange="renderHistory()">
+                    <span style="font-size:0.75rem;">to</span>
+                    <input type="date" id="filter-to-date" onchange="renderHistory()">
+                </div>
+            </div>
+
+            <div class="analytics-grid">
+                <div class="analytics-card">
+                    <h4>Total Sales</h4>
+                    <div class="amount" id="stat-total-sales" style="color:var(--primary);">₹0</div>
+                </div>
+                <div class="analytics-card">
+                    <h4>Cash Recd.</h4>
+                    <div class="amount" id="stat-cash-sales" style="color:var(--success);">₹0</div>
+                </div>
+                <div class="analytics-card">
+                    <h4>Online Recd.</h4>
+                    <div class="amount" id="stat-online-sales" style="color:#4338ca;">₹0</div>
+                </div>
+            </div>
+
+            <h3 style="font-size:0.8rem; color:#64748b; margin-bottom:6px;">PRODUCT-WISE SALES</h3>
+            <div class="product-summary-grid" id="product-stats-container">
+                <div style="font-size:0.75rem; color:#94a3b8; grid-column: 1/-1;">No product sales in this period</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>
+                <span>Sales History</span>
+                <div style="display:flex; gap:4px; flex-wrap:wrap;">
+                    <button id="btn-export-excel" class="btn-qty" style="width:auto; padding:4px 8px; font-size:0.75rem; background:var(--success);" onclick="exportToExcel()">📊 Excel</button>
+                    <button id="btn-export-pdf" class="btn-qty" style="width:auto; padding:4px 8px; font-size:0.75rem; background:#7c3aed;" onclick="exportToPDF()">📄 PDF</button>
+                    <button id="btn-export-img" class="btn-qty" style="width:auto; padding:4px 8px; font-size:0.75rem; background:#0284c7;" onclick="exportToImage()">🖼️ Image</button>
+                    <button class="btn-qty" style="width:auto; padding:4px 8px; font-size:0.75rem; background:var(--danger);" onclick="masterDelete()">🗑️ Clear</button>
+                </div>
+            </h2>
+
+            <div class="table-responsive">
+                <table class="history-table">
+                    <thead>
+                        <tr>
+                            <th>Bill #</th>
+                            <th>Date</th>
+                            <th>Customer</th>
+                            <th>Items</th>
+                            <th>Total</th>
+                            <th>Mode</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="history-tbody">
+                        <tr><td colspan="7" style="text-align:center; color:#94a3b8; padding: 15px 0;">No sales history found</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- BOTTOM MOBILE TABS BAR -->
+    <div class="bottom-nav">
+        <button class="nav-tab active" onclick="switchView('menu', this)">
+            <span>📋</span> Menu
+        </button>
+        <button class="nav-tab" onclick="switchView('order', this)">
+            <span>🛒</span> Current Order
+        </button>
+        <button class="nav-tab" onclick="switchView('history', this)">
+            <span>📜</span> Sale History
+        </button>
+    </div>
+
+    <!-- PRINT ANALYTICS POPUP MODAL -->
+    <div id="analytics-print-modal" class="modal">
+        <div class="modal-content">
+            <h3 style="margin-bottom:6px; font-size:1rem; text-align:center;">Print / Export Analytics</h3>
+            <p style="font-size:0.75rem; color:#64748b; text-align:center; margin-bottom:14px;">Select format for Product-Wise Analytics Report:</p>
+            
+            <button class="export-option-btn" onclick="triggerAnalyticsExport('pdf')">
+                <span style="font-size:1.2rem;">📄</span> PDF Document
+            </button>
+            <button class="export-option-btn" onclick="triggerAnalyticsExport('image')">
+                <span style="font-size:1.2rem;">🖼️</span> Image File (PNG)
+            </button>
+            <button class="export-option-btn" onclick="triggerAnalyticsExport('excel')">
+                <span style="font-size:1.2rem;">📊</span> Excel Sheet (.xlsx)
+            </button>
+            <button class="export-option-btn" onclick="triggerAnalyticsExport('print')">
+                <span style="font-size:1.2rem;">🖨️</span> Direct Thermal Print
+            </button>
+
+            <button class="btn btn-secondary" onclick="closeAnalyticsPrintModal()" style="margin-top:8px;">Cancel</button>
+        </div>
+    </div>
+
+    <!-- SETTINGS & BRANDING MODAL -->
+    <div id="branding-modal" class="modal">
+        <div class="modal-content">
+            <h3 style="margin-bottom:10px; font-size: 1rem;">Settings & Customizations</h3>
+            <div class="input-group">
+                <label style="font-size:0.75rem; font-weight:bold;">Store Name:</label>
+                <input type="text" id="brand-name-input">
+                <label style="font-size:0.75rem; font-weight:bold;">Slogan:</label>
+                <input type="text" id="brand-slogan-input">
+                <label style="font-size:0.75rem; font-weight:bold;">Upload Store Logo:</label>
+                <input type="file" id="brand-logo-file" accept="image/*" style="font-size:0.8rem;">
+            </div>
+
+            <hr style="margin: 10px 0; border: none; border-top: 1px solid #e2e8f0;">
+            <h4 style="font-size: 0.85rem; margin-bottom: 6px;">Order Settings</h4>
+            <div style="display:flex; flex-direction:column; gap:6px; font-size:0.8rem;">
+                <label><input type="checkbox" id="cfg-show-customer"> Enable Customer Info Field</label>
+                <label><input type="checkbox" id="cfg-show-discount"> Enable Discount Field</label>
+            </div>
+
+            <hr style="margin: 10px 0; border: none; border-top: 1px solid #e2e8f0;">
+            <h4 style="font-size: 0.85rem; margin-bottom: 6px;">Manage Categories</h4>
+            <div style="display:flex; gap:6px; margin-bottom:8px;">
+                <input type="text" id="new-cat-input" placeholder="New Category Name" style="flex:1; padding:6px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.8rem;">
+                <button class="btn-qty" style="width:auto; padding:0 10px;" onclick="addCategoryFromSettings()">+ Add</button>
+            </div>
+            <div id="categories-list-container" style="display:flex; flex-wrap:wrap; gap:4px; margin-bottom:10px;"></div>
+
+            <hr style="margin: 10px 0; border: none; border-top: 1px solid #e2e8f0;">
+            <h4 style="font-size: 0.85rem; margin-bottom: 6px;">Current Order Action Buttons</h4>
+            <div style="display:flex; flex-direction:column; gap:6px; font-size:0.8rem;">
+                <label><input type="checkbox" id="cfg-btn-whatsapp"> Show WhatsApp Button</label>
+                <label><input type="checkbox" id="cfg-btn-print"> Show Print Button</label>
+                <label><input type="checkbox" id="cfg-btn-save"> Show Save Only Button</label>
+            </div>
+
+            <hr style="margin: 10px 0; border: none; border-top: 1px solid #e2e8f0;">
+            <h4 style="font-size: 0.85rem; margin-bottom: 6px;">Sales History Export Options</h4>
+            <div style="display:flex; flex-direction:column; gap:6px; font-size:0.8rem;">
+                <label><input type="checkbox" id="cfg-exp-excel"> Show Excel Export</label>
+                <label><input type="checkbox" id="cfg-exp-pdf"> Show PDF Export</label>
+                <label><input type="checkbox" id="cfg-exp-img"> Show Image Export</label>
+            </div>
+
+            <div style="display:flex; gap:6px; margin-top:14px;">
+                <button class="btn btn-primary" onclick="saveBranding()">Save Settings</button>
+                <button class="btn btn-secondary" onclick="closeBrandingModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden Off-Screen Container for Sales History Export -->
+    <div id="export-wrapper">
+        <div style="text-align: center; margin-bottom: 15px;">
+            <h2 id="exp-header-title" style="margin:0; font-size: 18px; color: #1e293b;">Store Name</h2>
+            <p id="exp-header-sub" style="margin:2px 0 0 0; font-size: 12px; color: #64748b;">Sales Report</p>
+        </div>
+        <table>
+            <thead>
+                <tr id="exp-thead-row">
+                    <th>Bill #</th>
+                    <th>Date & Time</th>
+                    <th>Customer Name</th>
+                    <th>Phone</th>
+                    <th>Gender</th>
+                    <th>Items</th>
+                    <th>Subtotal</th>
+                    <th id="exp-th-discount">Discount</th>
+                    <th>Grand Total</th>
+                    <th>Mode</th>
+                </tr>
+            </thead>
+            <tbody id="export-tbody"></tbody>
+        </table>
+    </div>
+
+    <!-- Hidden Off-Screen Container for Analytics Dashboard PDF/Image Export -->
+    <div id="analytics-export-wrapper">
+        <div style="text-align: center; margin-bottom: 15px;">
+            <h2 id="analytics-exp-title" style="margin:0; font-size: 18px; color: #1e293b;">Store Name</h2>
+            <p id="analytics-exp-subtitle" style="margin:2px 0 0 0; font-size: 12px; color: #64748b;">Live Analytics & Product Sales Report</p>
+        </div>
+
+        <div style="display: flex; justify-content: space-around; background: #f8fafc; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; margin-bottom: 15px; text-align: center;">
+            <div>
+                <div style="font-size: 10px; color: #64748b;">TOTAL SALES</div>
+                <div id="analytics-exp-total" style="font-size: 14px; font-weight: bold; color: #2563eb;">₹0.00</div>
+            </div>
+            <div>
+                <div style="font-size: 10px; color: #64748b;">CASH RECD.</div>
+                <div id="analytics-exp-cash" style="font-size: 14px; font-weight: bold; color: #16a34a;">₹0.00</div>
+            </div>
+            <div>
+                <div style="font-size: 10px; color: #64748b;">ONLINE RECD.</div>
+                <div id="analytics-exp-online" style="font-size: 14px; font-weight: bold; color: #4338ca;">₹0.00</div>
+            </div>
+        </div>
+
+        <h3 style="font-size: 13px; color: #334155; margin-bottom: 6px;">PRODUCT-WISE SALES SUMMARY</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Product Name</th>
+                    <th>Quantity Sold</th>
+                    <th>Total Revenue (₹)</th>
+                </tr>
+            </thead>
+            <tbody id="analytics-exp-tbody"></tbody>
+        </table>
+    </div>
+
+    <!-- Hidden Thermal Receipt Output -->
+    <div id="thermal-receipt"></div>
+
+    <script>
+        let categories = JSON.parse(localStorage.getItem('pos_categories')) || ["Breakfast", "Lunch", "Dinner", "Beverages", "Snacks"];
+        let activeCategory = "All";
+
+        let menu = JSON.parse(localStorage.getItem('pos_menu')) || [
+            { id: 1, name: "Tea", price: 15, category: "Beverages", img: "" },
+            { id: 2, name: "Coffee", price: 25, category: "Beverages", img: "" },
+            { id: 3, name: "Samosa", price: 20, category: "Snacks", img: "" },
+            { id: 4, name: "Dosa", price: 50, category: "Breakfast", img: "" },
+            { id: 5, name: "Meals", price: 120, category: "Lunch", img: "" }
+        ];
+
+        let cart = {};
+        let activeEditingBillId = null;
+        let isEditControlsVisible = false;
+        let paymentMode = 'Cash';
+        let salesHistory = JSON.parse(localStorage.getItem('pos_sales')) || [];
+        
+        let storeConfig = JSON.parse(localStorage.getItem('pos_config')) || {
+            name: "My Smart POS",
+            slogan: "Fast Mobile Billing",
+            logo: "",
+            showWhatsapp: true,
+            showPrint: true,
+            showSave: true,
+            showExpExcel: true,
+            showExpPdf: true,
+            showExpImg: true,
+            showDiscount: true,
+            showCustomerInfo: true
+        };
+
+        /* Numeric Key Check */
+        function onlyNumbers(e) {
+            const allowedKeys = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab', '.'];
+            if (!allowedKeys.includes(e.key) && (e.key < '0' || e.key > '9')) {
+                e.preventDefault();
+            }
+        }
+
+        /* Strict Single Digit Key Check for Phone Field */
+        function isOnlyDigitKey(evt) {
+            var charCode = (evt.which) ? evt.which : evt.keyCode;
+            if (charCode > 31 && (charCode < 48 || charCode > 57)) {
+                return false;
+            }
+            return true;
+        }
+
+        /* Strict Sanitizer to strip non-digit characters on Paste or Input */
+        function sanitizeDigitsOnly(inputElem) {
+            inputElem.value = inputElem.value.replace(/[^0-9]/g, '');
+        }
+
+        /* Single Selection Helper for Gender Checkboxes */
+        function selectGenderCheckbox(clickedCheckbox) {
+            const checkboxes = document.querySelectorAll('input[name="cust-gender-cb"]');
+            checkboxes.forEach(cb => {
+                if (cb !== clickedCheckbox) cb.checked = false;
+            });
+        }
+
+        function getSelectedGender() {
+            const checked = document.querySelector('input[name="cust-gender-cb"]:checked');
+            return checked ? checked.value : "";
+        }
+
+        function setSelectedGender(genderVal) {
+            const checkboxes = document.querySelectorAll('input[name="cust-gender-cb"]');
+            checkboxes.forEach(cb => {
+                cb.checked = (cb.value === genderVal);
+            });
+        }
+
+        window.onload = function() {
+            applyBranding();
+            applyButtonVisibility();
+            applyDiscountVisibility();
+            applyCustomerInfoVisibility();
+            renderCategoryChips();
+            populateCategoryDropdown();
+            renderMenu();
+            renderCart();
+            renderHistory();
+            updateBillNoDisplay();
+        };
+
+        function switchView(tabName, elem) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.nav-tab').forEach(n => n.classList.remove('active'));
+
+            document.getElementById(`view-${tabName}`).classList.add('active');
+            elem.classList.add('active');
+        }
+
+        /* CATEGORIES MANAGEMENT */
+        function renderCategoryChips() {
+            let container = document.getElementById('category-bar-container');
+            
+            let chipsHtml = `<div class="cat-chip ${activeCategory === 'All' ? 'active' : ''}" onclick="selectCategory('All')">All</div>`;
+
+            chipsHtml += categories.map(cat => {
+                let isActive = activeCategory === cat;
+                return `
+                <div class="cat-chip ${isActive ? 'active' : ''}" onclick="selectCategory('${cat}')">
+                    <span>${cat}</span>
+                </div>`;
+            }).join('');
+
+            container.innerHTML = chipsHtml;
+        }
+
+        function selectCategory(cat) {
+            activeCategory = cat;
+            renderCategoryChips();
+            renderMenu();
+        }
+
+        function showInlineCategoryInput() {
+            document.getElementById('inline-cat-box').style.display = 'flex';
+            document.getElementById('item-custom-category').focus();
+        }
+
+        function hideInlineCategoryInput() {
+            document.getElementById('inline-cat-box').style.display = 'none';
+            document.getElementById('item-custom-category').value = '';
+        }
+
+        function addInlineCategory() {
+            let val = document.getElementById('item-custom-category').value.trim();
+            if (!val) return alert("Please enter category name");
+            
+            if (val.toLowerCase() === "all" || val.toLowerCase() === "general") {
+                return alert("Reserved category name!");
+            }
+
+            if (!categories.includes(val)) {
+                categories.push(val);
+                localStorage.setItem('pos_categories', JSON.stringify(categories));
+                renderCategoryChips();
+                populateCategoryDropdown(val);
+                hideInlineCategoryInput();
+            } else {
+                alert("Category already exists!");
+            }
+        }
+
+        function deleteSelectedCategoryInline() {
+            let select = document.getElementById('item-category-select');
+            let selectedCat = select.value;
+
+            if (!selectedCat) return alert("No category selected to delete!");
+            deleteCategory(selectedCat);
+        }
+
+        function populateCategoryDropdown(selectedCat = null) {
+            let select = document.getElementById('item-category-select');
+            select.innerHTML = categories.map(c => `<option value="${c}">${c}</option>`).join('');
+            if (selectedCat) select.value = selectedCat;
+        }
+
+        function renderSettingsCategories() {
+            let container = document.getElementById('categories-list-container');
+            container.innerHTML = categories.map(c => `
+                <span class="badge badge-online" style="display:inline-flex; align-items:center; gap:4px; padding:4px 8px; font-size:0.75rem;">
+                    ${c} <button onclick="deleteCategory('${c}')" style="background:none; border:none; cursor:pointer; font-weight:bold; color:red;">×</button>
+                </span>
+            `).join('');
+        }
+
+        function addCategoryFromSettings() {
+            let val = document.getElementById('new-cat-input').value.trim();
+            if (!val) return;
+            if (val.toLowerCase() === "all" || val.toLowerCase() === "general") return alert("Reserved category name!");
+            
+            if (!categories.includes(val)) {
+                categories.push(val);
+                localStorage.setItem('pos_categories', JSON.stringify(categories));
+                renderCategoryChips();
+                populateCategoryDropdown();
+                renderSettingsCategories();
+                document.getElementById('new-cat-input').value = '';
+            }
+        }
+
+        function deleteCategory(catName) {
+            if (confirm(`Delete category "${catName}"?\nItems under this category will be moved to "General".`)) {
+                categories = categories.filter(c => c !== catName);
+                localStorage.setItem('pos_categories', JSON.stringify(categories));
+
+                let updatedMenu = false;
+                menu.forEach(item => {
+                    if (item.category === catName) {
+                        item.category = "General";
+                        updatedMenu = true;
+                    }
+                });
+
+                if (updatedMenu) {
+                    localStorage.setItem('pos_menu', JSON.stringify(menu));
+                }
+
+                if (activeCategory === catName) activeCategory = "All";
+
+                renderCategoryChips();
+                populateCategoryDropdown();
+                renderSettingsCategories();
+                renderMenu();
+            }
+        }
+
+        function applyBranding() {
+            document.getElementById('app-name').innerText = storeConfig.name;
+            document.getElementById('app-slogan').innerText = storeConfig.slogan;
+            if (storeConfig.logo) {
+                document.getElementById('app-logo').src = storeConfig.logo;
+            }
+        }
+
+        function applyButtonVisibility() {
+            document.getElementById('btn-action-whatsapp').style.display = storeConfig.showWhatsapp !== false ? 'block' : 'none';
+            document.getElementById('btn-action-print').style.display = storeConfig.showPrint !== false ? 'block' : 'none';
+            document.getElementById('btn-action-save').style.display = storeConfig.showSave !== false ? 'block' : 'none';
+
+            document.getElementById('btn-export-excel').style.display = storeConfig.showExpExcel !== false ? 'inline-flex' : 'none';
+            document.getElementById('btn-export-pdf').style.display = storeConfig.showExpPdf !== false ? 'inline-flex' : 'none';
+            document.getElementById('btn-export-img').style.display = storeConfig.showExpImg !== false ? 'inline-flex' : 'none';
+        }
+
+        function applyDiscountVisibility() {
+            let isDiscountEnabled = storeConfig.showDiscount !== false;
+            document.getElementById('discount-row').style.display = isDiscountEnabled ? 'flex' : 'none';
+            
+            if (!isDiscountEnabled) {
+                document.getElementById('discount-pct').value = 0;
+            }
+            calculateBill();
+        }
+
+        function applyCustomerInfoVisibility() {
+            let isCustInfoEnabled = storeConfig.showCustomerInfo !== false;
+            document.getElementById('customer-info-container').style.display = isCustInfoEnabled ? 'block' : 'none';
+        }
+
+        function openBrandingModal() {
+            document.getElementById('brand-name-input').value = storeConfig.name;
+            document.getElementById('brand-slogan-input').value = storeConfig.slogan;
+            document.getElementById('cfg-show-discount').checked = storeConfig.showDiscount !== false;
+            document.getElementById('cfg-show-customer').checked = storeConfig.showCustomerInfo !== false;
+
+            document.getElementById('cfg-btn-whatsapp').checked = storeConfig.showWhatsapp !== false;
+            document.getElementById('cfg-btn-print').checked = storeConfig.showPrint !== false;
+            document.getElementById('cfg-btn-save').checked = storeConfig.showSave !== false;
+
+            document.getElementById('cfg-exp-excel').checked = storeConfig.showExpExcel !== false;
+            document.getElementById('cfg-exp-pdf').checked = storeConfig.showExpPdf !== false;
+            document.getElementById('cfg-exp-img').checked = storeConfig.showExpImg !== false;
+
+            renderSettingsCategories();
+            document.getElementById('branding-modal').style.display = 'flex';
+        }
+
+        function closeBrandingModal() {
+            document.getElementById('branding-modal').style.display = 'none';
+        }
+
+        function openAnalyticsPrintModal() {
+            document.getElementById('analytics-print-modal').style.display = 'flex';
+        }
+
+        function closeAnalyticsPrintModal() {
+            document.getElementById('analytics-print-modal').style.display = 'none';
+        }
+
+        function triggerAnalyticsExport(format) {
+            closeAnalyticsPrintModal();
+            if (format === 'pdf') {
+                exportAnalyticsToPDF();
+            } else if (format === 'image') {
+                exportAnalyticsToImage();
+            } else if (format === 'excel') {
+                exportAnalyticsToExcel();
+            } else if (format === 'print') {
+                printAnalyticsReport();
+            }
+        }
+
+        function saveBranding() {
+            let name = document.getElementById('brand-name-input').value.trim();
+            let slogan = document.getElementById('brand-slogan-input').value.trim();
+            let fileInput = document.getElementById('brand-logo-file');
+
+            let showDisc = document.getElementById('cfg-show-discount').checked;
+            let showCust = document.getElementById('cfg-show-customer').checked;
+
+            let showWa = document.getElementById('cfg-btn-whatsapp').checked;
+            let showPr = document.getElementById('cfg-btn-print').checked;
+            let showSa = document.getElementById('cfg-btn-save').checked;
+
+            let showExpEx = document.getElementById('cfg-exp-excel').checked;
+            let showExpPdf = document.getElementById('cfg-exp-pdf').checked;
+            let showExpImg = document.getElementById('cfg-exp-img').checked;
+
+            if (!showWa && !showPr && !showSa) {
+                return alert("⚠️ At least 1 current order action button must remain enabled!");
+            }
+
+            if (!showExpEx && !showExpPdf && !showExpImg) {
+                return alert("⚠️ At least 1 sales history export option (Excel, PDF, or Image) must remain enabled!");
+            }
+
+            if (name) storeConfig.name = name;
+            if (slogan) storeConfig.slogan = slogan;
+            storeConfig.showDiscount = showDisc;
+            storeConfig.showCustomerInfo = showCust;
+            storeConfig.showWhatsapp = showWa;
+            storeConfig.showPrint = showPr;
+            storeConfig.showSave = showSa;
+
+            storeConfig.showExpExcel = showExpEx;
+            storeConfig.showExpPdf = showExpPdf;
+            storeConfig.showExpImg = showExpImg;
+
+            let finalizeSave = () => {
+                localStorage.setItem('pos_config', JSON.stringify(storeConfig));
+                applyBranding();
+                applyButtonVisibility();
+                applyDiscountVisibility();
+                applyCustomerInfoVisibility();
+                closeBrandingModal();
+            };
+
+            if (fileInput.files && fileInput.files[0]) {
+                let reader = new FileReader();
+                reader.onload = function(e) {
+                    storeConfig.logo = e.target.result;
+                    finalizeSave();
+                };
+                reader.readAsDataURL(fileInput.files[0]);
+            } else {
+                finalizeSave();
+            }
+        }
+
+        function getNextBillNo() {
+            if (activeEditingBillId) return activeEditingBillId;
+
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            const dd = String(today.getDate()).padStart(2, '0');
+            const todayStr = `${yyyy}${mm}${dd}`;
+
+            const todaysBills = salesHistory.filter(s => s.id && s.id.startsWith(todayStr));
+            const nextSno = todaysBills.length + 1;
+
+            return `${todayStr}-${nextSno}`;
+        }
+
+        function updateBillNoDisplay() {
+            document.getElementById('next-bill-no').innerText = `Bill #: ${getNextBillNo()}`;
+        }
+
+        function renderMenu() {
+            const container = document.getElementById('menu-container');
+            
+            let filteredMenu = activeCategory === "All" 
+                ? menu 
+                : menu.filter(item => (item.category || "General") === activeCategory);
+
+            if (filteredMenu.length === 0) {
+                container.innerHTML = `<div style="grid-column: 1/-1; text-align:center; color:#94a3b8; padding:20px 0; font-size:0.85rem;">No items found in category "${activeCategory}"</div>`;
+                return;
+            }
+
+            container.innerHTML = filteredMenu.map(item => {
+                let qty = cart[item.id] ? cart[item.id].qty : 0;
+                let imgSrc = item.img || "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'><rect width='100' height='100' fill='%23cbd5e1'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-size='10' fill='%2364748b'>No Image</text></svg>";
+                return `
+                <div class="menu-item ${isEditControlsVisible ? 'show-edit-controls' : ''}">
+                    <div class="item-actions">
+                        <button class="btn-icon" onclick="editMenuItem(${item.id})">✏️</button>
+                        <button class="btn-icon" onclick="deleteMenuItem(${item.id})">❌</button>
+                    </div>
+                    <img src="${imgSrc}" alt="${item.name}">
+                    <h4>${item.name}</h4>
+                    <div class="cat-label">${item.category || 'General'}</div>
+                    <div class="price">₹${item.price}</div>
+                    <div class="qty-controls">
+                        <button class="btn-qty" onclick="updateQty(${item.id}, -1)">-</button>
+                        <span style="font-size:0.85rem;">${qty}</span>
+                        <button class="btn-qty" onclick="updateQty(${item.id}, 1)">+</button>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        function toggleAddMenu() {
+            let form = document.getElementById('menu-form');
+            isEditControlsVisible = (form.style.display === 'none');
+            form.style.display = isEditControlsVisible ? 'block' : 'none';
+            
+            document.getElementById('edit-item-id').value = '';
+            document.getElementById('item-name').value = '';
+            document.getElementById('item-price').value = '';
+            document.getElementById('item-image').value = '';
+            hideInlineCategoryInput();
+            
+            populateCategoryDropdown();
+            renderMenu();
+        }
+
+        function saveMenuItem() {
+            let id = document.getElementById('edit-item-id').value;
+            let name = document.getElementById('item-name').value.trim();
+            let price = parseFloat(document.getElementById('item-price').value);
+            let category = document.getElementById('item-category-select').value;
+            let fileInput = document.getElementById('item-image');
+
+            if (!name || isNaN(price)) return alert('Please enter item name & price');
+
+            let processSave = (imgBase64) => {
+                if (id) {
+                    let index = menu.findIndex(m => m.id == id);
+                    menu[index] = { id: Number(id), name, price, category, img: imgBase64 || menu[index].img };
+                } else {
+                    menu.push({ id: Date.now(), name, price, category, img: imgBase64 || '' });
+                }
+                localStorage.setItem('pos_menu', JSON.stringify(menu));
+                toggleAddMenu();
+            };
+
+            if (fileInput.files && fileInput.files[0]) {
+                let reader = new FileReader();
+                reader.onload = e => processSave(e.target.result);
+                reader.readAsDataURL(fileInput.files[0]);
+            } else {
+                processSave(null);
+            }
+        }
+
+        function editMenuItem(id) {
+            let item = menu.find(m => m.id === id);
+            if (!item) return;
+            document.getElementById('menu-form').style.display = 'block';
+            document.getElementById('edit-item-id').value = item.id;
+            document.getElementById('item-name').value = item.name;
+            document.getElementById('item-price').value = item.price;
+            
+            populateCategoryDropdown(item.category);
+        }
+
+        function deleteMenuItem(id) {
+            if (confirm("Delete menu item?")) {
+                menu = menu.filter(m => m.id !== id);
+                delete cart[id];
+                localStorage.setItem('pos_menu', JSON.stringify(menu));
+                renderMenu();
+                renderCart();
+            }
+        }
+
+        function updateQty(id, change) {
+            let item = menu.find(m => m.id === id);
+            if (!item) return;
+
+            if (!cart[id]) {
+                if (change > 0) cart[id] = { ...item, qty: change };
+            } else {
+                cart[id].qty += change;
+                if (cart[id].qty <= 0) delete cart[id];
+            }
+            renderMenu();
+            renderCart();
+        }
+
+        function renderCart() {
+            const tbody = document.getElementById('cart-tbody');
+            let keys = Object.keys(cart);
+
+            if (keys.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#94a3b8; padding: 15px 0;">No items added</td></tr>`;
+                calculateBill();
+                return;
+            }
+
+            tbody.innerHTML = keys.map(k => {
+                let item = cart[k];
+                return `
+                <tr>
+                    <td>${item.name}</td>
+                    <td>${item.qty}</td>
+                    <td>₹${item.price}</td>
+                    <td>₹${item.qty * item.price}</td>
+                </tr>`;
+            }).join('');
+
+            calculateBill();
+        }
+
+        function calculateBill() {
+            let subTotal = Object.values(cart).reduce((sum, item) => sum + (item.price * item.qty), 0);
+            let isDiscountEnabled = storeConfig.showDiscount !== false;
+            let discountPct = isDiscountEnabled ? (parseFloat(document.getElementById('discount-pct').value) || 0) : 0;
+            let grandTotal = subTotal - (subTotal * (discountPct / 100));
+
+            document.getElementById('sub-total').innerText = `₹${subTotal.toFixed(2)}`;
+            document.getElementById('grand-total').innerText = `₹${grandTotal.toFixed(2)}`;
+
+            calculateBalance();
+            calculateSplit();
+        }
+
+        function setPaymentMode(mode) {
+            paymentMode = mode;
+            document.getElementById('pay-cash').classList.toggle('active', mode === 'Cash');
+            document.getElementById('pay-online').classList.toggle('active', mode === 'Online');
+            document.getElementById('pay-split').classList.toggle('active', mode === 'Split');
+
+            document.getElementById('payment-calc-box').style.display = mode === 'Online' ? 'none' : 'block';
+            document.getElementById('cash-mode-fields').style.display = mode === 'Cash' ? 'block' : 'none';
+            document.getElementById('split-mode-fields').style.display = mode === 'Split' ? 'block' : 'none';
+
+            if (mode === 'Split') calculateSplit();
+        }
+
+        function calculateBalance() {
+            if (paymentMode !== 'Cash') return;
+            let grandTotal = parseFloat(document.getElementById('grand-total').innerText.replace('₹', '')) || 0;
+            let cashGiven = parseFloat(document.getElementById('cash-given').value) || 0;
+            let diff = cashGiven - grandTotal;
+
+            let balanceElem = document.getElementById('cash-balance');
+            if (diff >= 0) {
+                balanceElem.style.color = "var(--success)";
+                balanceElem.innerText = `Give ₹${diff.toFixed(2)}`;
+            } else {
+                balanceElem.style.color = "var(--danger)";
+                balanceElem.innerText = `Gets ₹${Math.abs(diff).toFixed(2)}`;
+            }
+        }
+
+        function calculateSplit() {
+            if (paymentMode !== 'Split') return;
+            let grandTotal = parseFloat(document.getElementById('grand-total').innerText.replace('₹', '')) || 0;
+            let cashPart = parseFloat(document.getElementById('split-cash').value) || 0;
+            let onlinePart = Math.max(0, grandTotal - cashPart);
+
+            document.getElementById('split-online').value = onlinePart.toFixed(2);
+        }
+
+        function processOrder(actionType) {
+            let items = Object.values(cart);
+            if (items.length === 0) return alert("Cart is empty!");
+
+            let subTotal = parseFloat(document.getElementById('sub-total').innerText.replace('₹',''));
+            let isDiscountEnabled = storeConfig.showDiscount !== false;
+            let discount = isDiscountEnabled ? (parseFloat(document.getElementById('discount-pct').value) || 0) : 0;
+            let grandTotal = parseFloat(document.getElementById('grand-total').innerText.replace('₹',''));
+            
+            // Customer Details Input
+            let custName = document.getElementById('cust-name').value.trim();
+            let phone = document.getElementById('cust-phone').value.trim();
+            
+            // Gender Checkbox Reading
+            let custGender = getSelectedGender();
+
+            if (actionType === 'whatsapp') {
+                if (!phone || phone.length !== 10 || isNaN(phone)) {
+                    return alert("Please enter a valid 10-digit WhatsApp number!");
+                }
+            }
+
+            let paymentDetail = paymentMode;
+            let cashVal = grandTotal;
+            let onlineVal = 0;
+
+            if (paymentMode === 'Online') {
+                cashVal = 0;
+                onlineVal = grandTotal;
+            } else if (paymentMode === 'Split') {
+                cashVal = parseFloat(document.getElementById('split-cash').value) || 0;
+                onlineVal = parseFloat(document.getElementById('split-online').value) || 0;
+                paymentDetail = `Split (Cash: ₹${cashVal}, Online: ₹${onlineVal})`;
+            }
+
+            let billId = activeEditingBillId ? activeEditingBillId : getNextBillNo();
+            let now = new Date();
+
+            let order = {
+                id: billId,
+                timestamp: now.getTime(),
+                date: now.toLocaleString(),
+                custName: custName,
+                custPhone: phone,
+                custGender: custGender,
+                items: items,
+                subTotal: subTotal,
+                discount: discount,
+                grandTotal: grandTotal,
+                paymentMode: paymentDetail,
+                cashAmount: cashVal,
+                onlineAmount: onlineVal
+            };
+
+            if (activeEditingBillId) {
+                let idx = salesHistory.findIndex(s => s.id === activeEditingBillId);
+                if (idx !== -1) salesHistory[idx] = order;
+                activeEditingBillId = null;
+            } else {
+                salesHistory.unshift(order);
+            }
+
+            localStorage.setItem('pos_sales', JSON.stringify(salesHistory));
+
+            if (actionType === 'whatsapp') {
+                sendWhatsAppBill(order, phone);
+            } else if (actionType === 'print') {
+                printThermalReceipt(order);
+            } else {
+                alert("✅ Bill Saved Successfully!");
+            }
+
+            // Reset Order Form
+            cart = {};
+            document.getElementById('discount-pct').value = 0;
+            document.getElementById('cash-given').value = '';
+            document.getElementById('split-cash').value = '';
+            document.getElementById('cust-name').value = '';
+            document.getElementById('cust-phone').value = '';
+            setSelectedGender("");
+            
+            renderMenu();
+            renderCart();
+            renderHistory();
+            updateBillNoDisplay();
+        }
+
+        function sendWhatsAppBill(order, phone) {
+            let isDiscountEnabled = storeConfig.showDiscount !== false;
+            let itemLines = order.items.map(i => `• ${i.name} x ${i.qty} = ₹${i.price * i.qty}`).join('\n');
+            let discountLine = isDiscountEnabled ? `\n*Discount:* ${order.discount}%` : '';
+            
+            let custHeader = '';
+            if (order.custName || order.custGender) {
+                custHeader = `\n*Customer:* ${order.custName || 'N/A'} ${order.custGender ? '(' + order.custGender + ')' : ''}`;
+            }
+
+            let message = `*${storeConfig.name}*\n${storeConfig.slogan}\n----------------------------\n*Bill #:* ${order.id}${custHeader}\n*Date:* ${order.date}\n----------------------------\n${itemLines}\n----------------------------\n*Subtotal:* ₹${order.subTotal}${discountLine}\n*Grand Total:* ₹${order.grandTotal}\n*Payment Mode:* ${order.paymentMode}\n----------------------------\nThank you!`;
+            
+            let encodedMsg = encodeURIComponent(message);
+            window.open(`https://wa.me/91${phone}?text=${encodedMsg}`, '_blank');
+        }
+
+        function printThermalReceipt(order) {
+            let container = document.getElementById('thermal-receipt');
+            let logoHTML = storeConfig.logo ? `<img src="${storeConfig.logo}">` : '';
+            let isDiscountEnabled = storeConfig.showDiscount !== false;
+            let discountRow = isDiscountEnabled ? `<tr><td>Discount:</td><td>${order.discount}%</td></tr>` : '';
+
+            let custDetailsHTML = '';
+            if (order.custName || order.custPhone || order.custGender) {
+                custDetailsHTML = `
+                    <div class="divider"></div>
+                    ${order.custName ? `<p style="text-align:left;">Cust: ${order.custName}</p>` : ''}
+                    ${order.custPhone ? `<p style="text-align:left;">Phone: ${order.custPhone}</p>` : ''}
+                    ${order.custGender ? `<p style="text-align:left;">Gender: ${order.custGender}</p>` : ''}
+                `;
+            }
+
+            container.innerHTML = `
+                ${logoHTML}
+                <h3>${storeConfig.name}</h3>
+                <p>${storeConfig.slogan}</p>
+                <div class="divider"></div>
+                <p>Bill #: ${order.id}</p>
+                <p>Date: ${order.date}</p>
+                ${custDetailsHTML}
+                <div class="divider"></div>
+                <table>
+                    <thead>
+                        <tr><td><strong>Item</strong></td><td><strong>Qty</strong></td><td><strong>Amt</strong></td></tr>
+                    </thead>
+                    <tbody>
+                        ${order.items.map(i => `
+                            <tr>
+                                <td>${i.name}</td>
+                                <td>x${i.qty}</td>
+                                <td>₹${i.price * i.qty}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+                <div class="divider"></div>
+                <table>
+                    <tr><td>Subtotal:</td><td>₹${order.subTotal.toFixed(2)}</td></tr>
+                    ${discountRow}
+                    <tr><td><strong>Grand Total:</strong></td><td><strong>₹${order.grandTotal.toFixed(2)}</strong></td></tr>
+                    <tr><td>Payment:</td><td>${order.paymentMode}</td></tr>
+                </table>
+                <div class="divider"></div>
+                <p style="text-align:center;">*** Thank You! Visit Again ***</p>
+            `;
+
+            window.print();
+        }
+
+        /* PRINT ANALYTICS REPORT */
+        function printAnalyticsReport() {
+            let filteredList = getFilteredSales();
+            let filterLabel = document.getElementById('date-filter-preset').selectedOptions[0].text;
+            let totalSales = document.getElementById('stat-total-sales').innerText;
+            let cashSales = document.getElementById('stat-cash-sales').innerText;
+            let onlineSales = document.getElementById('stat-online-sales').innerText;
+
+            let productStats = getProductSalesSummary(filteredList);
+
+            let container = document.getElementById('thermal-receipt');
+            let logoHTML = storeConfig.logo ? `<img src="${storeConfig.logo}">` : '';
+
+            container.innerHTML = `
+                ${logoHTML}
+                <h3>${storeConfig.name}</h3>
+                <p>SALES ANALYTICS REPORT</p>
+                <p>Period: ${filterLabel}</p>
+                <div class="divider"></div>
+                <table>
+                    <tr><td>Total Revenue:</td><td><strong>${totalSales}</strong></td></tr>
+                    <tr><td>Cash Received:</td><td>${cashSales}</td></tr>
+                    <tr><td>Online Received:</td><td>${onlineSales}</td></tr>
+                    <tr><td>Total Orders:</td><td>${filteredList.length}</td></tr>
+                </table>
+                <div class="divider"></div>
+                <p style="text-align:center; font-weight:bold; margin: 4px 0;">PRODUCT-WISE BREAKDOWN</p>
+                <table>
+                    <thead>
+                        <tr><td><strong>Product</strong></td><td><strong>Qty</strong></td><td><strong>Total</strong></td></tr>
+                    </thead>
+                    <tbody>
+                        ${Object.keys(productStats).map(p => `
+                            <tr>
+                                <td>${p}</td>
+                                <td>x${productStats[p].qty}</td>
+                                <td>₹${productStats[p].revenue.toFixed(2)}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+                <div class="divider"></div>
+                <p style="text-align:center;">Printed On: ${new Date().toLocaleString()}</p>
+            `;
+
+            window.print();
+        }
+
+        /* DATE RANGE FILTER HELPER */
+        function handleFilterChange() {
+            let val = document.getElementById('date-filter-preset').value;
+            let customBox = document.getElementById('custom-date-box');
+            customBox.style.display = (val === 'custom') ? 'flex' : 'none';
+            renderHistory();
+        }
+
+        function getFilteredSales() {
+            let filterType = document.getElementById('date-filter-preset').value;
+            let now = new Date();
+
+            return salesHistory.filter(s => {
+                let sDate = s.timestamp ? new Date(s.timestamp) : new Date(s.date);
+                if (isNaN(sDate.getTime())) return true;
+
+                if (filterType === 'today') {
+                    return sDate.toDateString() === now.toDateString();
+                } else if (filterType === 'yesterday') {
+                    let y = new Date(now);
+                    y.setDate(now.getDate() - 1);
+                    return sDate.toDateString() === y.toDateString();
+                } else if (filterType === 'this_week') {
+                    let startOfWeek = new Date(now);
+                    startOfWeek.setDate(now.getDate() - now.getDay());
+                    startOfWeek.setHours(0,0,0,0);
+                    return sDate >= startOfWeek;
+                } else if (filterType === 'this_month') {
+                    return sDate.getMonth() === now.getMonth() && sDate.getFullYear() === now.getFullYear();
+                } else if (filterType === 'prev_month') {
+                    let prevM = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                    return sDate.getMonth() === prevM.getMonth() && sDate.getFullYear() === prevM.getFullYear();
+                } else if (filterType === 'custom') {
+                    let fromVal = document.getElementById('filter-from-date').value;
+                    let toVal = document.getElementById('filter-to-date').value;
+
+                    if (!fromVal && !toVal) return true;
+                    
+                    let fromDate = fromVal ? new Date(fromVal) : new Date(0);
+                    fromDate.setHours(0,0,0,0);
+                    
+                    let toDate = toVal ? new Date(toVal) : new Date();
+                    toDate.setHours(23,59,59,999);
+
+                    return sDate >= fromDate && sDate <= toDate;
+                }
+                return true;
+            });
+        }
+
+        function getProductSalesSummary(dataset) {
+            let productStats = {};
+            dataset.forEach(s => {
+                s.items.forEach(item => {
+                    if (!productStats[item.name]) {
+                        productStats[item.name] = { qty: 0, revenue: 0 };
+                    }
+                    productStats[item.name].qty += item.qty;
+                    productStats[item.name].revenue += (item.qty * item.price);
+                });
+            });
+            return productStats;
+        }
+
+        /* LIVE ANALYTICS & SALES HISTORY RENDER */
+        function renderHistory() {
+            let filteredList = getFilteredSales();
+            renderAnalytics(filteredList);
+
+            let tbody = document.getElementById('history-tbody');
+            if (filteredList.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:#94a3b8; padding:15px 0;">No sales history for selected range</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = filteredList.map(s => {
+                let originalIdx = salesHistory.findIndex(item => item.id === s.id);
+                
+                let custInfoStr = [];
+                if (s.custName) custInfoStr.push(s.custName);
+                if (s.custPhone) custInfoStr.push(s.custPhone);
+                if (s.custGender) custInfoStr.push(`(${s.custGender})`);
+                
+                let displayCust = custInfoStr.length > 0 ? custInfoStr.join(' ') : '-';
+
+                return `
+                <tr>
+                    <td><strong>${s.id}</strong></td>
+                    <td>${s.date}</td>
+                    <td><span style="font-size:0.75rem; color:#475569;">${displayCust}</span></td>
+                    <td>${s.items.map(i => `${i.name}(${i.qty})`).join(', ')}</td>
+                    <td>₹${s.grandTotal}</td>
+                    <td>
+                        <span class="badge ${s.paymentMode.startsWith('Cash') ? 'badge-cash' : (s.paymentMode.startsWith('Online') ? 'badge-online' : 'badge-split')}">
+                            ${s.paymentMode}
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn-icon" title="Edit Bill" onclick="editSaleBill(${originalIdx})">✏️</button>
+                        <button class="btn-icon" title="Print Bill" onclick="printThermalReceipt(salesHistory[${originalIdx}])">🖨️</button>
+                        <button class="btn-icon" title="Delete Bill" onclick="deleteHistoryItem(${originalIdx})">🗑️</button>
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+
+        function renderAnalytics(dataset) {
+            let totalSales = 0;
+            let cashTotal = 0;
+            let onlineTotal = 0;
+            let productStats = getProductSalesSummary(dataset);
+
+            dataset.forEach(s => {
+                totalSales += (s.grandTotal || 0);
+
+                if (typeof s.cashAmount !== 'undefined') {
+                    cashTotal += s.cashAmount;
+                    onlineTotal += s.onlineAmount;
+                } else {
+                    if (s.paymentMode.startsWith('Cash')) cashTotal += s.grandTotal;
+                    else if (s.paymentMode.startsWith('Online')) onlineTotal += s.grandTotal;
+                }
+            });
+
+            document.getElementById('stat-total-sales').innerText = `₹${totalSales.toFixed(2)}`;
+            document.getElementById('stat-cash-sales').innerText = `₹${cashTotal.toFixed(2)}`;
+            document.getElementById('stat-online-sales').innerText = `₹${onlineTotal.toFixed(2)}`;
+
+            let pContainer = document.getElementById('product-stats-container');
+            let keys = Object.keys(productStats);
+
+            if (keys.length === 0) {
+                pContainer.innerHTML = `<div style="font-size:0.75rem; color:#94a3b8; grid-column: 1/-1;">No product sales in this period</div>`;
+                return;
+            }
+
+            pContainer.innerHTML = keys.map(pName => `
+                <div class="product-stat-card">
+                    <div class="p-name">${pName}</div>
+                    <div style="margin-top:2px; color:#334155;">Qty: <strong>${productStats[pName].qty}</strong></div>
+                    <div style="color:var(--primary); font-weight:bold;">₹${productStats[pName].revenue.toFixed(2)}</div>
+                </div>
+            `).join('');
+        }
+
+        function editSaleBill(index) {
+            let bill = salesHistory[index];
+            if (!bill) return;
+
+            activeEditingBillId = bill.id;
+            cart = {};
+            
+            bill.items.forEach(item => {
+                let menuItem = menu.find(m => m.name === item.name);
+                let id = menuItem ? menuItem.id : Date.now() + Math.random();
+                cart[id] = { id: id, name: item.name, price: item.price, qty: item.qty };
+            });
+
+            document.getElementById('discount-pct').value = bill.discount || 0;
+            document.getElementById('cust-name').value = bill.custName || '';
+            document.getElementById('cust-phone').value = bill.custPhone || '';
+            setSelectedGender(bill.custGender || '');
+
+            renderMenu();
+            renderCart();
+            updateBillNoDisplay();
+            
+            switchView('order', document.querySelectorAll('.nav-tab')[1]);
+        }
+
+        function deleteHistoryItem(index) {
+            if (confirm("Delete this history record?")) {
+                salesHistory.splice(index, 1);
+                localStorage.setItem('pos_sales', JSON.stringify(salesHistory));
+                renderHistory();
+                updateBillNoDisplay();
+            }
+        }
+
+        /* ANALYTICS EXPORT FUNCTIONS (EXCEL, PDF, IMAGE) */
+        function prepareAnalyticsExportDOM(filteredList) {
+            document.getElementById('analytics-exp-title').innerText = storeConfig.name;
+            let filterLabel = document.getElementById('date-filter-preset').selectedOptions[0].text;
+            document.getElementById('analytics-exp-subtitle').innerText = `Analytics & Product Sales Report - (${filterLabel})`;
+
+            document.getElementById('analytics-exp-total').innerText = document.getElementById('stat-total-sales').innerText;
+            document.getElementById('analytics-exp-cash').innerText = document.getElementById('stat-cash-sales').innerText;
+            document.getElementById('analytics-exp-online').innerText = document.getElementById('stat-online-sales').innerText;
+
+            let productStats = getProductSalesSummary(filteredList);
+            let tbody = document.getElementById('analytics-exp-tbody');
+            let keys = Object.keys(productStats);
+
+            if (keys.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:#94a3b8;">No product sales recorded for this period</td></tr>`;
+            } else {
+                tbody.innerHTML = keys.map(pName => `
+                    <tr>
+                        <td><strong>${pName}</strong></td>
+                        <td>${productStats[pName].qty}</td>
+                        <td>₹${productStats[pName].revenue.toFixed(2)}</td>
+                    </tr>
+                `).join('');
+            }
+        }
+
+        function exportAnalyticsToExcel() {
+            let filteredList = getFilteredSales();
+            if (filteredList.length === 0) return alert("No analytics data to export for this range!");
+
+            let productStats = getProductSalesSummary(filteredList);
+            let filterLabel = document.getElementById('date-filter-preset').selectedOptions[0].text;
+
+            let pData = Object.keys(productStats).map(pName => ({
+                "Product Name": pName,
+                "Quantity Sold": productStats[pName].qty,
+                "Total Revenue (INR)": productStats[pName].revenue
+            }));
+
+            let summaryData = [
+                { "Metric": "Filter Period", "Value": filterLabel },
+                { "Metric": "Total Sales (INR)", "Value": document.getElementById('stat-total-sales').innerText.replace('₹','') },
+                { "Metric": "Cash Received (INR)", "Value": document.getElementById('stat-cash-sales').innerText.replace('₹','') },
+                { "Metric": "Online Received (INR)", "Value": document.getElementById('stat-online-sales').innerText.replace('₹','') }
+            ];
+
+            let workbook = XLSX.utils.book_new();
+
+            let summarySheet = XLSX.utils.json_to_sheet(summaryData);
+            XLSX.utils.book_append_sheet(workbook, summarySheet, "Overall Summary");
+
+            let pSheet = XLSX.utils.json_to_sheet(pData);
+            XLSX.utils.book_append_sheet(workbook, pSheet, "Product Sales");
+
+            XLSX.writeFile(workbook, `Analytics_Report_${new Date().toISOString().slice(0,10)}.xlsx`);
+        }
+
+        async function exportAnalyticsToPDF() {
+            let filteredList = getFilteredSales();
+            if (filteredList.length === 0) return alert("No analytics data to export for this range!");
+
+            prepareAnalyticsExportDOM(filteredList);
+            let element = document.getElementById('analytics-export-wrapper');
+
+            try {
+                let canvas = await html2canvas(element, { scale: 2 });
+                let imgData = canvas.toDataURL('image/png');
+                
+                const { jsPDF } = window.jspdf;
+                let pdf = new jsPDF('p', 'mm', 'a4');
+                let imgWidth = 210; 
+                let imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+                pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+                pdf.save(`Analytics_Report_${new Date().toISOString().slice(0,10)}.pdf`);
+            } catch (err) {
+                alert("Failed to generate PDF!");
+                console.error(err);
+            }
+        }
+
+        async function exportAnalyticsToImage() {
+            let filteredList = getFilteredSales();
+            if (filteredList.length === 0) return alert("No analytics data to export for this range!");
+
+            prepareAnalyticsExportDOM(filteredList);
+            let element = document.getElementById('analytics-export-wrapper');
+
+            try {
+                let canvas = await html2canvas(element, { scale: 2 });
+                let image = canvas.toDataURL("image/png").replace("image/png", "image/octet-stream");
+                let link = document.createElement('a');
+                link.download = `Analytics_Report_${new Date().toISOString().slice(0,10)}.png`;
+                link.href = image;
+                link.click();
+            } catch (err) {
+                alert("Failed to generate Image!");
+                console.error(err);
+            }
+        }
+
+        /* EXPORT EXCEL FOR SALES HISTORY */
+        function exportToExcel() {
+            let filteredList = getFilteredSales();
+            if (filteredList.length === 0) return alert("No sales history to export for this range!");
+            let isDiscountEnabled = storeConfig.showDiscount !== false;
+
+            let data = filteredList.map(s => {
+                let row = {
+                    "Bill Number": s.id,
+                    "Date & Time": s.date,
+                    "Customer Name": s.custName || "-",
+                    "Phone Number": s.custPhone || "-",
+                    "Gender": s.custGender || "-"
+                };
+
+                menu.forEach(m => {
+                    let itemMatch = s.items.find(i => i.name === m.name);
+                    row[m.name] = itemMatch ? itemMatch.qty : 0;
+                });
+
+                row["Subtotal (INR)"] = s.subTotal;
+                if (isDiscountEnabled) {
+                    row["Discount (%)"] = s.discount;
+                }
+                row["Grand Total (INR)"] = s.grandTotal;
+                row["Payment Method"] = s.paymentMode;
+
+                return row;
+            });
+
+            let worksheet = XLSX.utils.json_to_sheet(data);
+            let workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Sales Report");
+            XLSX.writeFile(workbook, `Sales_Report_${new Date().toISOString().slice(0,10)}.xlsx`);
+        }
+
+        /* PREPARE OFF-SCREEN TABLE FOR PDF & IMAGE */
+        function prepareExportDOM(filteredList) {
+            document.getElementById('exp-header-title').innerText = storeConfig.name;
+            let filterLabel = document.getElementById('date-filter-preset').selectedOptions[0].text;
+            document.getElementById('exp-header-sub').innerText = `Sales Report - (${filterLabel})`;
+
+            let isDiscountEnabled = storeConfig.showDiscount !== false;
+            document.getElementById('exp-th-discount').style.display = isDiscountEnabled ? 'table-cell' : 'none';
+
+            let expTbody = document.getElementById('export-tbody');
+            expTbody.innerHTML = filteredList.map(s => `
+                <tr>
+                    <td><strong>${s.id}</strong></td>
+                    <td>${s.date}</td>
+                    <td>${s.custName || '-'}</td>
+                    <td>${s.custPhone || '-'}</td>
+                    <td>${s.custGender || '-'}</td>
+                    <td>${s.items.map(i => `${i.name} (${i.qty})`).join(', ')}</td>
+                    <td>₹${s.subTotal.toFixed(2)}</td>
+                    ${isDiscountEnabled ? `<td>${s.discount}%</td>` : ''}
+                    <td><strong>₹${s.grandTotal.toFixed(2)}</strong></td>
+                    <td>${s.paymentMode}</td>
+                </tr>
+            `).join('');
+        }
+
+        /* EXPORT PDF FOR SALES HISTORY */
+        async function exportToPDF() {
+            let filteredList = getFilteredSales();
+            if (filteredList.length === 0) return alert("No sales history to export for this range!");
+
+            prepareExportDOM(filteredList);
+            let element = document.getElementById('export-wrapper');
+
+            try {
+                let canvas = await html2canvas(element, { scale: 2 });
+                let imgData = canvas.toDataURL('image/png');
+                
+                const { jsPDF } = window.jspdf;
+                let pdf = new jsPDF('p', 'mm', 'a4');
+                let imgWidth = 210; 
+                let imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+                pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+                pdf.save(`Sales_Report_${new Date().toISOString().slice(0,10)}.pdf`);
+            } catch (err) {
+                alert("Failed to generate PDF!");
+                console.error(err);
+            }
+        }
+
+        /* EXPORT IMAGE FOR SALES HISTORY */
+        async function exportToImage() {
+            let filteredList = getFilteredSales();
+            if (filteredList.length === 0) return alert("No sales history to export for this range!");
+
+            prepareExportDOM(filteredList);
+            let element = document.getElementById('export-wrapper');
+
+            try {
+                let canvas = await html2canvas(element, { scale: 2 });
+                let image = canvas.toDataURL("image/png").replace("image/png", "image/octet-stream");
+                let link = document.createElement('a');
+                link.download = `Sales_Report_${new Date().toISOString().slice(0,10)}.png`;
+                link.href = image;
+                link.click();
+            } catch (err) {
+                alert("Failed to generate Image!");
+                console.error(err);
+            }
+        }
+
+        /* MASTER DELETE */
+        function masterDelete() {
+            let filteredList = getFilteredSales();
+            if (filteredList.length === 0) return alert("No sales records found for selected filter!");
+
+            let filterLabel = document.getElementById('date-filter-preset').selectedOptions[0].text;
+            let password = prompt(`⚠️ CLEAR HISTORY WARNING ⚠️\n\nDeleting history for selected range: "${filterLabel}".\nEnter Password (2026):`);
+            
+            if (password === "2026") {
+                let filteredIds = new Set(filteredList.map(s => s.id));
+                salesHistory = salesHistory.filter(s => !filteredIds.has(s.id));
+                localStorage.setItem('pos_sales', JSON.stringify(salesHistory));
+                renderHistory();
+                updateBillNoDisplay();
+                alert(`Sales history for "${filterLabel}" cleared successfully!`);
+            } else if (password !== null) {
+                alert("❌ Incorrect Password!");
+            }
+        }
+    </script>
+</body>
+</html>
