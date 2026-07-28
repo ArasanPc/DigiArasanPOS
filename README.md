@@ -1,2 +1,0 @@
-# DigiArasanPOS
-POS
