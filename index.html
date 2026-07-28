@@ -3,26 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Digi Arasan POS</title>
-
-    <!-- ===== App Icons (used by Chrome "Install"/"Create Shortcut") ===== -->
-    <link rel="icon" type="image/x-icon" href="favicon.ico">
-    <link rel="icon" type="image/png" sizes="16x16" href="icons/icon-16.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32.png">
-    <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
-    <link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="icons/icon-180.png">
-    <link rel="shortcut icon" href="favicon.ico">
-
-    <!-- ===== PWA Manifest (required for Chrome to use the logo as the shortcut/app icon) ===== -->
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#dc2626">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Digi Arasan">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="application-name" content="Digi Arasan">
-
+    <title>Smart Mobile POS</title>
     <!-- Export Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -58,6 +39,21 @@
         .card { background: var(--card); border-radius: 12px; padding: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 10px; }
         h2 { font-size: 1rem; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px; }
 
+        /* Category Scroll Bar */
+        .category-bar {
+            display: flex; gap: 8px; overflow-x: auto; padding: 4px 0 10px 0; margin-bottom: 8px; align-items: center;
+            -webkit-overflow-scrolling: touch; scrollbar-width: none;
+        }
+        .category-bar::-webkit-scrollbar { display: none; }
+        .cat-chip {
+            padding: 6px 14px; border-radius: 20px; background: #e2e8f0; color: #475569;
+            font-size: 0.8rem; font-weight: 600; white-space: nowrap; cursor: pointer; border: 1px solid transparent;
+            transition: all 0.2s; display: inline-flex; align-items: center;
+        }
+        .cat-chip.active {
+            background: var(--primary); color: white; border-color: var(--primary-dark);
+        }
+
         /* Date Filter Controls */
         .filter-container {
             display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; background: #f8fafc; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0;
@@ -84,6 +80,7 @@
         .menu-item { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 8px; text-align: center; display: flex; flex-direction: column; justify-content: space-between; position: relative; }
         .menu-item img { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; border-radius: 6px; margin-bottom: 6px; }
         .menu-item h4 { font-size: 0.85rem; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .menu-item .cat-label { font-size: 0.65rem; color: #64748b; margin-bottom: 4px; text-transform: uppercase; }
         .menu-item .price { font-weight: bold; color: var(--primary); font-size: 0.85rem; margin-bottom: 6px; }
         
         .qty-controls { display: flex; justify-content: center; align-items: center; gap: 6px; }
@@ -115,7 +112,7 @@
         .btn-secondary { background: #64748b; color: white; }
 
         .input-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
-        .input-group input { padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; width: 100%; font-size: 0.9rem; }
+        .input-group input, .input-group select { padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; width: 100%; font-size: 0.9rem; background: white; }
 
         .table-responsive { overflow-x: auto; -webkit-overflow-scrolling: touch; }
         .history-table { width: 100%; border-collapse: collapse; min-width: 500px; font-size: 0.8rem; }
@@ -126,6 +123,20 @@
         .badge-cash { background: #dcfce7; color: #15803d; }
         .badge-online { background: #e0e7ff; color: #4338ca; }
         .badge-split { background: #fef3c7; color: #b45309; }
+
+        /* Customer Form Styles */
+        .cust-section { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; margin-top: 10px; }
+        .cust-section h4 { font-size: 0.8rem; font-weight: bold; margin-bottom: 8px; color: #475569; }
+        .cust-grid { display: flex; flex-direction: column; gap: 8px; }
+
+        /* Gender Checkbox Styling */
+        .gender-checkbox-container {
+            display: flex; gap: 15px; align-items: center; font-size: 0.85rem; color: #334155;
+            background: white; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px;
+        }
+        .gender-checkbox-container label {
+            display: flex; align-items: center; gap: 4px; cursor: pointer; user-select: none;
+        }
 
         /* Modal Overlay */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; padding: 15px; }
@@ -189,11 +200,35 @@
                 <button class="btn-qty" style="width:auto; padding:4px 10px; font-size:0.8rem;" onclick="toggleAddMenu()">+ Add Item</button>
             </h2>
 
+            <!-- Category Selector Chips -->
+            <div class="category-bar" id="category-bar-container"></div>
+
+            <!-- Add/Edit Item Form -->
             <div id="menu-form" style="display:none; margin-bottom:12px; background:#f8fafc; padding:10px; border-radius:8px; border:1px solid #e2e8f0;">
                 <input type="hidden" id="edit-item-id">
                 <div class="input-group">
                     <input type="text" id="item-name" placeholder="Item Name">
                     <input type="number" id="item-price" placeholder="Price (₹)" onkeydown="onlyNumbers(event)">
+                    
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <label style="font-size: 0.75rem; color:#64748b; font-weight:bold;">Category:</label>
+                        <button type="button" onclick="showInlineCategoryInput()" style="background:none; border:none; color:var(--primary); font-size:0.75rem; font-weight:bold; cursor:pointer;">+ Add Category</button>
+                    </div>
+                    
+                    <div style="display:flex; gap:6px; align-items:center;">
+                        <select id="item-category-select" style="flex:1;">
+                            <!-- Populated dynamically -->
+                        </select>
+                        <button type="button" onclick="deleteSelectedCategoryInline()" title="Delete Selected Category" style="background:#fef2f2; border:1px solid #fca5a5; color:var(--danger); font-size:0.8rem; font-weight:bold; padding:8px 10px; border-radius:6px; cursor:pointer;">🗑️ Delete</button>
+                    </div>
+
+                    <!-- Inline New Category Input Form -->
+                    <div id="inline-cat-box" style="display:none; gap:6px; margin-top:4px;">
+                        <input type="text" id="item-custom-category" placeholder="Enter New Category Name" style="font-size:0.85rem;">
+                        <button class="btn-qty" style="width:auto; padding:0 10px; font-size:0.75rem; background:var(--success);" onclick="addInlineCategory()">Add</button>
+                        <button class="btn-qty" style="width:auto; padding:0 8px; font-size:0.75rem; background:#64748b;" onclick="hideInlineCategoryInput()">Cancel</button>
+                    </div>
+
                     <label style="font-size: 0.75rem; color:#64748b; margin-top:2px;">Upload Square Image:</label>
                     <input type="file" id="item-image" accept="image/*" style="font-size:0.8rem;">
                 </div>
@@ -228,7 +263,7 @@
                     <span>Sub Total:</span>
                     <strong id="sub-total">₹0.00</strong>
                 </div>
-                <div class="summary-row">
+                <div class="summary-row" id="discount-row">
                     <label>Discount (%):</label>
                     <input type="number" id="discount-pct" value="0" min="0" max="100" oninput="calculateBill()" onkeydown="onlyNumbers(event)">
                 </div>
@@ -268,8 +303,26 @@
                 </div>
             </div>
 
-            <div style="margin-top:8px;" id="phone-input-container">
-                <input type="tel" id="cust-phone" maxlength="10" placeholder="10-Digit WhatsApp No." onkeydown="onlyNumbers(event)" style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:8px; font-size:0.85rem;">
+            <!-- Customer Info Fields (Optional) -->
+            <div id="customer-info-container" class="cust-section">
+                <h4>👤 Customer Info (Optional)</h4>
+                <div class="cust-grid">
+                    <input type="text" id="cust-name" placeholder="Customer Name" style="padding:8px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.85rem; width:100%;">
+                    
+                    <!-- Strictly Numbers Only Phone Input -->
+                    <input type="tel" id="cust-phone" maxlength="10" placeholder="10-Digit Mobile / WhatsApp No." 
+                           onkeypress="return isOnlyDigitKey(event)" 
+                           oninput="sanitizeDigitsOnly(this)" 
+                           style="padding:8px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.85rem; width:100%;">
+                    
+                    <!-- Gender Tick Box Options -->
+                    <div class="gender-checkbox-container">
+                        <span style="font-weight: 500;">Gender:</span>
+                        <label><input type="checkbox" name="cust-gender-cb" value="Male" onclick="selectGenderCheckbox(this)"> Male</label>
+                        <label><input type="checkbox" name="cust-gender-cb" value="Female" onclick="selectGenderCheckbox(this)"> Female</label>
+                        <label><input type="checkbox" name="cust-gender-cb" value="Other" onclick="selectGenderCheckbox(this)"> Other</label>
+                    </div>
+                </div>
             </div>
 
             <button class="btn btn-success" id="btn-action-whatsapp" onclick="processOrder('whatsapp')">💬 Send WhatsApp Bill</button>
@@ -345,6 +398,7 @@
                         <tr>
                             <th>Bill #</th>
                             <th>Date</th>
+                            <th>Customer</th>
                             <th>Items</th>
                             <th>Total</th>
                             <th>Mode</th>
@@ -352,7 +406,7 @@
                         </tr>
                     </thead>
                     <tbody id="history-tbody">
-                        <tr><td colspan="6" style="text-align:center; color:#94a3b8; padding: 15px 0;">No sales history found</td></tr>
+                        <tr><td colspan="7" style="text-align:center; color:#94a3b8; padding: 15px 0;">No sales history found</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -409,6 +463,21 @@
             </div>
 
             <hr style="margin: 10px 0; border: none; border-top: 1px solid #e2e8f0;">
+            <h4 style="font-size: 0.85rem; margin-bottom: 6px;">Order Settings</h4>
+            <div style="display:flex; flex-direction:column; gap:6px; font-size:0.8rem;">
+                <label><input type="checkbox" id="cfg-show-customer"> Enable Customer Info Field</label>
+                <label><input type="checkbox" id="cfg-show-discount"> Enable Discount Field</label>
+            </div>
+
+            <hr style="margin: 10px 0; border: none; border-top: 1px solid #e2e8f0;">
+            <h4 style="font-size: 0.85rem; margin-bottom: 6px;">Manage Categories</h4>
+            <div style="display:flex; gap:6px; margin-bottom:8px;">
+                <input type="text" id="new-cat-input" placeholder="New Category Name" style="flex:1; padding:6px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.8rem;">
+                <button class="btn-qty" style="width:auto; padding:0 10px;" onclick="addCategoryFromSettings()">+ Add</button>
+            </div>
+            <div id="categories-list-container" style="display:flex; flex-wrap:wrap; gap:4px; margin-bottom:10px;"></div>
+
+            <hr style="margin: 10px 0; border: none; border-top: 1px solid #e2e8f0;">
             <h4 style="font-size: 0.85rem; margin-bottom: 6px;">Current Order Action Buttons</h4>
             <div style="display:flex; flex-direction:column; gap:6px; font-size:0.8rem;">
                 <label><input type="checkbox" id="cfg-btn-whatsapp"> Show WhatsApp Button</label>
@@ -439,12 +508,15 @@
         </div>
         <table>
             <thead>
-                <tr>
+                <tr id="exp-thead-row">
                     <th>Bill #</th>
                     <th>Date & Time</th>
+                    <th>Customer Name</th>
+                    <th>Phone</th>
+                    <th>Gender</th>
                     <th>Items</th>
                     <th>Subtotal</th>
-                    <th>Discount</th>
+                    <th id="exp-th-discount">Discount</th>
                     <th>Grand Total</th>
                     <th>Mode</th>
                 </tr>
@@ -492,10 +564,15 @@
     <div id="thermal-receipt"></div>
 
     <script>
+        let categories = JSON.parse(localStorage.getItem('pos_categories')) || ["Breakfast", "Lunch", "Dinner", "Beverages", "Snacks"];
+        let activeCategory = "All";
+
         let menu = JSON.parse(localStorage.getItem('pos_menu')) || [
-            { id: 1, name: "Tea", price: 15, img: "" },
-            { id: 2, name: "Coffee", price: 25, img: "" },
-            { id: 3, name: "Samosa", price: 20, img: "" }
+            { id: 1, name: "Tea", price: 15, category: "Beverages", img: "" },
+            { id: 2, name: "Coffee", price: 25, category: "Beverages", img: "" },
+            { id: 3, name: "Samosa", price: 20, category: "Snacks", img: "" },
+            { id: 4, name: "Dosa", price: 50, category: "Breakfast", img: "" },
+            { id: 5, name: "Meals", price: 120, category: "Lunch", img: "" }
         ];
 
         let cart = {};
@@ -513,9 +590,12 @@
             showSave: true,
             showExpExcel: true,
             showExpPdf: true,
-            showExpImg: true
+            showExpImg: true,
+            showDiscount: true,
+            showCustomerInfo: true
         };
 
+        /* Numeric Key Check */
         function onlyNumbers(e) {
             const allowedKeys = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab', '.'];
             if (!allowedKeys.includes(e.key) && (e.key < '0' || e.key > '9')) {
@@ -523,9 +603,47 @@
             }
         }
 
+        /* Strict Single Digit Key Check for Phone Field */
+        function isOnlyDigitKey(evt) {
+            var charCode = (evt.which) ? evt.which : evt.keyCode;
+            if (charCode > 31 && (charCode < 48 || charCode > 57)) {
+                return false;
+            }
+            return true;
+        }
+
+        /* Strict Sanitizer to strip non-digit characters on Paste or Input */
+        function sanitizeDigitsOnly(inputElem) {
+            inputElem.value = inputElem.value.replace(/[^0-9]/g, '');
+        }
+
+        /* Single Selection Helper for Gender Checkboxes */
+        function selectGenderCheckbox(clickedCheckbox) {
+            const checkboxes = document.querySelectorAll('input[name="cust-gender-cb"]');
+            checkboxes.forEach(cb => {
+                if (cb !== clickedCheckbox) cb.checked = false;
+            });
+        }
+
+        function getSelectedGender() {
+            const checked = document.querySelector('input[name="cust-gender-cb"]:checked');
+            return checked ? checked.value : "";
+        }
+
+        function setSelectedGender(genderVal) {
+            const checkboxes = document.querySelectorAll('input[name="cust-gender-cb"]');
+            checkboxes.forEach(cb => {
+                cb.checked = (cb.value === genderVal);
+            });
+        }
+
         window.onload = function() {
             applyBranding();
             applyButtonVisibility();
+            applyDiscountVisibility();
+            applyCustomerInfoVisibility();
+            renderCategoryChips();
+            populateCategoryDropdown();
             renderMenu();
             renderCart();
             renderHistory();
@@ -540,6 +658,122 @@
             elem.classList.add('active');
         }
 
+        /* CATEGORIES MANAGEMENT */
+        function renderCategoryChips() {
+            let container = document.getElementById('category-bar-container');
+            
+            let chipsHtml = `<div class="cat-chip ${activeCategory === 'All' ? 'active' : ''}" onclick="selectCategory('All')">All</div>`;
+
+            chipsHtml += categories.map(cat => {
+                let isActive = activeCategory === cat;
+                return `
+                <div class="cat-chip ${isActive ? 'active' : ''}" onclick="selectCategory('${cat}')">
+                    <span>${cat}</span>
+                </div>`;
+            }).join('');
+
+            container.innerHTML = chipsHtml;
+        }
+
+        function selectCategory(cat) {
+            activeCategory = cat;
+            renderCategoryChips();
+            renderMenu();
+        }
+
+        function showInlineCategoryInput() {
+            document.getElementById('inline-cat-box').style.display = 'flex';
+            document.getElementById('item-custom-category').focus();
+        }
+
+        function hideInlineCategoryInput() {
+            document.getElementById('inline-cat-box').style.display = 'none';
+            document.getElementById('item-custom-category').value = '';
+        }
+
+        function addInlineCategory() {
+            let val = document.getElementById('item-custom-category').value.trim();
+            if (!val) return alert("Please enter category name");
+            
+            if (val.toLowerCase() === "all" || val.toLowerCase() === "general") {
+                return alert("Reserved category name!");
+            }
+
+            if (!categories.includes(val)) {
+                categories.push(val);
+                localStorage.setItem('pos_categories', JSON.stringify(categories));
+                renderCategoryChips();
+                populateCategoryDropdown(val);
+                hideInlineCategoryInput();
+            } else {
+                alert("Category already exists!");
+            }
+        }
+
+        function deleteSelectedCategoryInline() {
+            let select = document.getElementById('item-category-select');
+            let selectedCat = select.value;
+
+            if (!selectedCat) return alert("No category selected to delete!");
+            deleteCategory(selectedCat);
+        }
+
+        function populateCategoryDropdown(selectedCat = null) {
+            let select = document.getElementById('item-category-select');
+            select.innerHTML = categories.map(c => `<option value="${c}">${c}</option>`).join('');
+            if (selectedCat) select.value = selectedCat;
+        }
+
+        function renderSettingsCategories() {
+            let container = document.getElementById('categories-list-container');
+            container.innerHTML = categories.map(c => `
+                <span class="badge badge-online" style="display:inline-flex; align-items:center; gap:4px; padding:4px 8px; font-size:0.75rem;">
+                    ${c} <button onclick="deleteCategory('${c}')" style="background:none; border:none; cursor:pointer; font-weight:bold; color:red;">×</button>
+                </span>
+            `).join('');
+        }
+
+        function addCategoryFromSettings() {
+            let val = document.getElementById('new-cat-input').value.trim();
+            if (!val) return;
+            if (val.toLowerCase() === "all" || val.toLowerCase() === "general") return alert("Reserved category name!");
+            
+            if (!categories.includes(val)) {
+                categories.push(val);
+                localStorage.setItem('pos_categories', JSON.stringify(categories));
+                renderCategoryChips();
+                populateCategoryDropdown();
+                renderSettingsCategories();
+                document.getElementById('new-cat-input').value = '';
+            }
+        }
+
+        function deleteCategory(catName) {
+            if (confirm(`Delete category "${catName}"?\nItems under this category will be moved to "General".`)) {
+                categories = categories.filter(c => c !== catName);
+                localStorage.setItem('pos_categories', JSON.stringify(categories));
+
+                let updatedMenu = false;
+                menu.forEach(item => {
+                    if (item.category === catName) {
+                        item.category = "General";
+                        updatedMenu = true;
+                    }
+                });
+
+                if (updatedMenu) {
+                    localStorage.setItem('pos_menu', JSON.stringify(menu));
+                }
+
+                if (activeCategory === catName) activeCategory = "All";
+
+                renderCategoryChips();
+                populateCategoryDropdown();
+                renderSettingsCategories();
+                renderMenu();
+            }
+        }
+
         function applyBranding() {
             document.getElementById('app-name').innerText = storeConfig.name;
             document.getElementById('app-slogan').innerText = storeConfig.slogan;
@@ -550,7 +784,6 @@
 
         function applyButtonVisibility() {
             document.getElementById('btn-action-whatsapp').style.display = storeConfig.showWhatsapp !== false ? 'block' : 'none';
-            document.getElementById('phone-input-container').style.display = storeConfig.showWhatsapp !== false ? 'block' : 'none';
             document.getElementById('btn-action-print').style.display = storeConfig.showPrint !== false ? 'block' : 'none';
             document.getElementById('btn-action-save').style.display = storeConfig.showSave !== false ? 'block' : 'none';
 
@@ -559,9 +792,27 @@
             document.getElementById('btn-export-img').style.display = storeConfig.showExpImg !== false ? 'inline-flex' : 'none';
         }
 
+        function applyDiscountVisibility() {
+            let isDiscountEnabled = storeConfig.showDiscount !== false;
+            document.getElementById('discount-row').style.display = isDiscountEnabled ? 'flex' : 'none';
+            
+            if (!isDiscountEnabled) {
+                document.getElementById('discount-pct').value = 0;
+            }
+            calculateBill();
+        }
+
+        function applyCustomerInfoVisibility() {
+            let isCustInfoEnabled = storeConfig.showCustomerInfo !== false;
+            document.getElementById('customer-info-container').style.display = isCustInfoEnabled ? 'block' : 'none';
+        }
+
         function openBrandingModal() {
             document.getElementById('brand-name-input').value = storeConfig.name;
             document.getElementById('brand-slogan-input').value = storeConfig.slogan;
+            document.getElementById('cfg-show-discount').checked = storeConfig.showDiscount !== false;
+            document.getElementById('cfg-show-customer').checked = storeConfig.showCustomerInfo !== false;
+
             document.getElementById('cfg-btn-whatsapp').checked = storeConfig.showWhatsapp !== false;
             document.getElementById('cfg-btn-print').checked = storeConfig.showPrint !== false;
             document.getElementById('cfg-btn-save').checked = storeConfig.showSave !== false;
@@ -570,6 +821,7 @@
             document.getElementById('cfg-exp-pdf').checked = storeConfig.showExpPdf !== false;
             document.getElementById('cfg-exp-img').checked = storeConfig.showExpImg !== false;
 
+            renderSettingsCategories();
             document.getElementById('branding-modal').style.display = 'flex';
         }
 
@@ -603,6 +855,9 @@
             let slogan = document.getElementById('brand-slogan-input').value.trim();
             let fileInput = document.getElementById('brand-logo-file');
 
+            let showDisc = document.getElementById('cfg-show-discount').checked;
+            let showCust = document.getElementById('cfg-show-customer').checked;
+
             let showWa = document.getElementById('cfg-btn-whatsapp').checked;
             let showPr = document.getElementById('cfg-btn-print').checked;
             let showSa = document.getElementById('cfg-btn-save').checked;
@@ -621,6 +876,8 @@
 
             if (name) storeConfig.name = name;
             if (slogan) storeConfig.slogan = slogan;
+            storeConfig.showDiscount = showDisc;
+            storeConfig.showCustomerInfo = showCust;
             storeConfig.showWhatsapp = showWa;
             storeConfig.showPrint = showPr;
             storeConfig.showSave = showSa;
@@ -633,6 +890,8 @@
                 localStorage.setItem('pos_config', JSON.stringify(storeConfig));
                 applyBranding();
                 applyButtonVisibility();
+                applyDiscountVisibility();
+                applyCustomerInfoVisibility();
                 closeBrandingModal();
             };
 
@@ -669,7 +928,17 @@
 
         function renderMenu() {
             const container = document.getElementById('menu-container');
-            container.innerHTML = menu.map(item => {
+            
+            let filteredMenu = activeCategory === "All" 
+                ? menu 
+                : menu.filter(item => (item.category || "General") === activeCategory);
+
+            if (filteredMenu.length === 0) {
+                container.innerHTML = `<div style="grid-column: 1/-1; text-align:center; color:#94a3b8; padding:20px 0; font-size:0.85rem;">No items found in category "${activeCategory}"</div>`;
+                return;
+            }
+
+            container.innerHTML = filteredMenu.map(item => {
                 let qty = cart[item.id] ? cart[item.id].qty : 0;
                 let imgSrc = item.img || "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'><rect width='100' height='100' fill='%23cbd5e1'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-size='10' fill='%2364748b'>No Image</text></svg>";
                 return `
@@ -680,6 +949,7 @@
                     </div>
                     <img src="${imgSrc}" alt="${item.name}">
                     <h4>${item.name}</h4>
+                    <div class="cat-label">${item.category || 'General'}</div>
                     <div class="price">₹${item.price}</div>
                     <div class="qty-controls">
                         <button class="btn-qty" onclick="updateQty(${item.id}, -1)">-</button>
@@ -699,7 +969,9 @@
             document.getElementById('item-name').value = '';
             document.getElementById('item-price').value = '';
             document.getElementById('item-image').value = '';
+            hideInlineCategoryInput();
             
+            populateCategoryDropdown();
             renderMenu();
         }
 
@@ -707,6 +979,7 @@
             let id = document.getElementById('edit-item-id').value;
             let name = document.getElementById('item-name').value.trim();
             let price = parseFloat(document.getElementById('item-price').value);
+            let category = document.getElementById('item-category-select').value;
             let fileInput = document.getElementById('item-image');
 
             if (!name || isNaN(price)) return alert('Please enter item name & price');
@@ -714,9 +987,9 @@
             let processSave = (imgBase64) => {
                 if (id) {
                     let index = menu.findIndex(m => m.id == id);
-                    menu[index] = { id: Number(id), name, price, img: imgBase64 || menu[index].img };
+                    menu[index] = { id: Number(id), name, price, category, img: imgBase64 || menu[index].img };
                 } else {
-                    menu.push({ id: Date.now(), name, price, img: imgBase64 || '' });
+                    menu.push({ id: Date.now(), name, price, category, img: imgBase64 || '' });
                 }
                 localStorage.setItem('pos_menu', JSON.stringify(menu));
                 toggleAddMenu();
@@ -738,6 +1011,8 @@
             document.getElementById('edit-item-id').value = item.id;
             document.getElementById('item-name').value = item.name;
             document.getElementById('item-price').value = item.price;
+            
+            populateCategoryDropdown(item.category);
         }
 
         function deleteMenuItem(id) {
@@ -790,7 +1065,8 @@
 
         function calculateBill() {
             let subTotal = Object.values(cart).reduce((sum, item) => sum + (item.price * item.qty), 0);
-            let discountPct = parseFloat(document.getElementById('discount-pct').value) || 0;
+            let isDiscountEnabled = storeConfig.showDiscount !== false;
+            let discountPct = isDiscountEnabled ? (parseFloat(document.getElementById('discount-pct').value) || 0) : 0;
             let grandTotal = subTotal - (subTotal * (discountPct / 100));
 
             document.getElementById('sub-total').innerText = `₹${subTotal.toFixed(2)}`;
@@ -843,9 +1119,16 @@
             if (items.length === 0) return alert("Cart is empty!");
 
             let subTotal = parseFloat(document.getElementById('sub-total').innerText.replace('₹',''));
-            let discount = parseFloat(document.getElementById('discount-pct').value) || 0;
+            let isDiscountEnabled = storeConfig.showDiscount !== false;
+            let discount = isDiscountEnabled ? (parseFloat(document.getElementById('discount-pct').value) || 0) : 0;
             let grandTotal = parseFloat(document.getElementById('grand-total').innerText.replace('₹',''));
+            
+            // Customer Details Input
+            let custName = document.getElementById('cust-name').value.trim();
             let phone = document.getElementById('cust-phone').value.trim();
+            
+            // Gender Checkbox Reading
+            let custGender = getSelectedGender();
 
             if (actionType === 'whatsapp') {
                 if (!phone || phone.length !== 10 || isNaN(phone)) {
@@ -873,6 +1156,9 @@
                 id: billId,
                 timestamp: now.getTime(),
                 date: now.toLocaleString(),
+                custName: custName,
+                custPhone: phone,
+                custGender: custGender,
                 items: items,
                 subTotal: subTotal,
                 discount: discount,
@@ -900,11 +1186,15 @@
                 alert("✅ Bill Saved Successfully!");
             }
 
+            // Reset Order Form
             cart = {};
             document.getElementById('discount-pct').value = 0;
             document.getElementById('cash-given').value = '';
             document.getElementById('split-cash').value = '';
+            document.getElementById('cust-name').value = '';
             document.getElementById('cust-phone').value = '';
+            setSelectedGender("");
+            
             renderMenu();
             renderCart();
             renderHistory();
@@ -912,8 +1202,16 @@
         }
 
         function sendWhatsAppBill(order, phone) {
+            let isDiscountEnabled = storeConfig.showDiscount !== false;
             let itemLines = order.items.map(i => `• ${i.name} x ${i.qty} = ₹${i.price * i.qty}`).join('\n');
-            let message = `*${storeConfig.name}*\n${storeConfig.slogan}\n----------------------------\n*Bill #:* ${order.id}\n*Date:* ${order.date}\n----------------------------\n${itemLines}\n----------------------------\n*Subtotal:* ₹${order.subTotal}\n*Discount:* ${order.discount}%\n*Grand Total:* ₹${order.grandTotal}\n*Payment Mode:* ${order.paymentMode}\n----------------------------\nThank you!`;
+            let discountLine = isDiscountEnabled ? `\n*Discount:* ${order.discount}%` : '';
+            
+            let custHeader = '';
+            if (order.custName || order.custGender) {
+                custHeader = `\n*Customer:* ${order.custName || 'N/A'} ${order.custGender ? '(' + order.custGender + ')' : ''}`;
+            }
+
+            let message = `*${storeConfig.name}*\n${storeConfig.slogan}\n----------------------------\n*Bill #:* ${order.id}${custHeader}\n*Date:* ${order.date}\n----------------------------\n${itemLines}\n----------------------------\n*Subtotal:* ₹${order.subTotal}${discountLine}\n*Grand Total:* ₹${order.grandTotal}\n*Payment Mode:* ${order.paymentMode}\n----------------------------\nThank you!`;
             
             let encodedMsg = encodeURIComponent(message);
             window.open(`https://wa.me/91${phone}?text=${encodedMsg}`, '_blank');
@@ -922,7 +1220,19 @@
         function printThermalReceipt(order) {
             let container = document.getElementById('thermal-receipt');
             let logoHTML = storeConfig.logo ? `<img src="${storeConfig.logo}">` : '';
-            
+            let isDiscountEnabled = storeConfig.showDiscount !== false;
+            let discountRow = isDiscountEnabled ? `<tr><td>Discount:</td><td>${order.discount}%</td></tr>` : '';
+
+            let custDetailsHTML = '';
+            if (order.custName || order.custPhone || order.custGender) {
+                custDetailsHTML = `
+                    <div class="divider"></div>
+                    ${order.custName ? `<p style="text-align:left;">Cust: ${order.custName}</p>` : ''}
+                    ${order.custPhone ? `<p style="text-align:left;">Phone: ${order.custPhone}</p>` : ''}
+                    ${order.custGender ? `<p style="text-align:left;">Gender: ${order.custGender}</p>` : ''}
+                `;
+            }
+
             container.innerHTML = `
                 ${logoHTML}
                 <h3>${storeConfig.name}</h3>
@@ -930,6 +1240,7 @@
                 <div class="divider"></div>
                 <p>Bill #: ${order.id}</p>
                 <p>Date: ${order.date}</p>
+                ${custDetailsHTML}
                 <div class="divider"></div>
                 <table>
                     <thead>
@@ -948,7 +1259,7 @@
                 <div class="divider"></div>
                 <table>
                     <tr><td>Subtotal:</td><td>₹${order.subTotal.toFixed(2)}</td></tr>
-                    <tr><td>Discount:</td><td>${order.discount}%</td></tr>
+                    ${discountRow}
                     <tr><td><strong>Grand Total:</strong></td><td><strong>₹${order.grandTotal.toFixed(2)}</strong></td></tr>
                     <tr><td>Payment:</td><td>${order.paymentMode}</td></tr>
                 </table>
@@ -1078,16 +1389,25 @@
 
             let tbody = document.getElementById('history-tbody');
             if (filteredList.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#94a3b8; padding:15px 0;">No sales history for selected range</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:#94a3b8; padding:15px 0;">No sales history for selected range</td></tr>`;
                 return;
             }
 
             tbody.innerHTML = filteredList.map(s => {
                 let originalIdx = salesHistory.findIndex(item => item.id === s.id);
+                
+                let custInfoStr = [];
+                if (s.custName) custInfoStr.push(s.custName);
+                if (s.custPhone) custInfoStr.push(s.custPhone);
+                if (s.custGender) custInfoStr.push(`(${s.custGender})`);
+                
+                let displayCust = custInfoStr.length > 0 ? custInfoStr.join(' ') : '-';
+
                 return `
                 <tr>
                     <td><strong>${s.id}</strong></td>
                     <td>${s.date}</td>
+                    <td><span style="font-size:0.75rem; color:#475569;">${displayCust}</span></td>
                     <td>${s.items.map(i => `${i.name}(${i.qty})`).join(', ')}</td>
                     <td>₹${s.grandTotal}</td>
                     <td>
@@ -1157,6 +1477,10 @@
             });
 
             document.getElementById('discount-pct').value = bill.discount || 0;
+            document.getElementById('cust-name').value = bill.custName || '';
+            document.getElementById('cust-phone').value = bill.custPhone || '';
+            setSelectedGender(bill.custGender || '');
+
             renderMenu();
             renderCart();
             updateBillNoDisplay();
@@ -1279,11 +1603,15 @@
         function exportToExcel() {
             let filteredList = getFilteredSales();
             if (filteredList.length === 0) return alert("No sales history to export for this range!");
+            let isDiscountEnabled = storeConfig.showDiscount !== false;
 
             let data = filteredList.map(s => {
                 let row = {
                     "Bill Number": s.id,
-                    "Date & Time": s.date
+                    "Date & Time": s.date,
+                    "Customer Name": s.custName || "-",
+                    "Phone Number": s.custPhone || "-",
+                    "Gender": s.custGender || "-"
                 };
 
                 menu.forEach(m => {
@@ -1292,7 +1620,9 @@
                 });
 
                 row["Subtotal (INR)"] = s.subTotal;
-                row["Discount (%)"] = s.discount;
+                if (isDiscountEnabled) {
+                    row["Discount (%)"] = s.discount;
+                }
                 row["Grand Total (INR)"] = s.grandTotal;
                 row["Payment Method"] = s.paymentMode;
 
@@ -1311,14 +1641,20 @@
             let filterLabel = document.getElementById('date-filter-preset').selectedOptions[0].text;
             document.getElementById('exp-header-sub').innerText = `Sales Report - (${filterLabel})`;
 
+            let isDiscountEnabled = storeConfig.showDiscount !== false;
+            document.getElementById('exp-th-discount').style.display = isDiscountEnabled ? 'table-cell' : 'none';
+
             let expTbody = document.getElementById('export-tbody');
             expTbody.innerHTML = filteredList.map(s => `
                 <tr>
                     <td><strong>${s.id}</strong></td>
                     <td>${s.date}</td>
+                    <td>${s.custName || '-'}</td>
+                    <td>${s.custPhone || '-'}</td>
+                    <td>${s.custGender || '-'}</td>
                     <td>${s.items.map(i => `${i.name} (${i.qty})`).join(', ')}</td>
                     <td>₹${s.subTotal.toFixed(2)}</td>
-                    <td>${s.discount}%</td>
+                    ${isDiscountEnabled ? `<td>${s.discount}%</td>` : ''}
                     <td><strong>₹${s.grandTotal.toFixed(2)}</strong></td>
                     <td>${s.paymentMode}</td>
                 </tr>
