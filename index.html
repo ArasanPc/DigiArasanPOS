@@ -3,25 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DIGI ARASAN POS</title>
-
-    <!-- ===== App Icons (used by Chrome "Install"/"Create Shortcut") ===== -->
-    <link rel="icon" type="image/x-icon" href="favicon.ico">
-    <link rel="icon" type="image/png" sizes="16x16" href="icons/icon-16.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32.png">
-    <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
-    <link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="icons/icon-180.png">
-    <link rel="shortcut icon" href="favicon.ico">
-
-    <!-- ===== PWA Manifest (required for Chrome to use the logo as the shortcut/app icon) ===== -->
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#dc2626">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="DIGI ARASAN">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="application-name" content="DIGI ARASAN POS">
+    <title>Smart Mobile POS</title>
     <!-- Export Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -142,15 +124,20 @@
         .badge-online { background: #e0e7ff; color: #4338ca; }
         .badge-split { background: #fef3c7; color: #b45309; }
 
-        /* Customer Form Styles */
-        .cust-section { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; margin-top: 10px; }
-        .cust-section h4 { font-size: 0.8rem; font-weight: bold; margin-bottom: 8px; color: #475569; }
-        .cust-grid { display: flex; flex-direction: column; gap: 8px; }
+        /* Customer Form Styles - One By One Stacked Mobile Friendly Layout */
+        .cust-section { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; margin-top: 10px; }
+        .cust-section h4 { font-size: 0.85rem; font-weight: bold; margin-bottom: 10px; color: #475569; }
+        .cust-grid { display: flex; flex-direction: column; gap: 10px; }
+
+        .cust-field { display: flex; flex-direction: column; gap: 4px; width: 100%; }
+        .cust-field label { font-size: 0.8rem; font-weight: 600; color: #475569; }
+        .cust-field input[type="text"], 
+        .cust-field input[type="tel"] { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem; background: white; }
 
         /* Gender Checkbox Styling */
         .gender-checkbox-container {
             display: flex; gap: 15px; align-items: center; font-size: 0.85rem; color: #334155;
-            background: white; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px;
+            background: white; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; width: 100%;
         }
         .gender-checkbox-container label {
             display: flex; align-items: center; gap: 4px; cursor: pointer; user-select: none;
@@ -158,7 +145,7 @@
 
         /* Modal Overlay */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; padding: 15px; }
-        .modal-content { background: white; padding: 16px; border-radius: 12px; width: 100%; max-width: 400px; max-height: 90vh; overflow-y: auto; }
+        .modal-content { background: white; padding: 16px; border-radius: 12px; width: 100%; max-width: 420px; max-height: 90vh; overflow-y: auto; }
 
         .export-option-btn { display: flex; align-items: center; gap: 10px; width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; background: #f8fafc; font-size: 0.9rem; font-weight: bold; cursor: pointer; margin-bottom: 8px; transition: background 0.2s; }
         .export-option-btn:hover { background: #f1f5f9; }
@@ -254,12 +241,18 @@
             </div>
 
             <div class="menu-grid" id="menu-container"></div>
+
+            <!-- CHECK OUT BUTTON ON MENU OPTION -->
+            <button class="btn btn-primary" style="margin-top: 10px;" onclick="goToOrderView()">🛒 Check out</button>
         </div>
     </div>
 
     <!-- TAB 2: CURRENT ORDER -->
     <div id="view-order" class="tab-content">
         <div class="card">
+            <!-- BACK TO MENU BUTTON ON CURRENT ORDER OPTION -->
+            <button class="btn btn-secondary" style="margin-bottom: 10px;" onclick="goToMenuView()">📋 Back To Menu</button>
+
             <h2>
                 <span>Current Order</span>
                 <span id="next-bill-no" style="font-size: 0.8rem; color: var(--primary); font-weight: bold;">Bill #: ---</span>
@@ -279,13 +272,30 @@
             <div class="bill-summary">
                 <div class="summary-row">
                     <span>Sub Total:</span>
-                    <strong id="sub-total">₹0.00</strong>
+                    <strong id="sub-total">₹ 0.00</strong>
                 </div>
                 <div class="summary-row" id="discount-row">
                     <label>Discount (%):</label>
                     <input type="number" id="discount-pct" value="0" min="0" max="100" oninput="calculateBill()" onkeydown="onlyNumbers(event)">
                 </div>
-                <div class="summary-row" style="font-size: 1rem; font-weight:bold; color: var(--primary); margin-top: 4px;">
+
+                <!-- GST BREAKDOWN DISPLAY -->
+                <div id="gst-breakdown-box" style="display:none; border-top:1px dashed #cbd5e1; margin-top:6px; padding-top:6px;">
+                    <div class="summary-row" style="color:#64748b; font-size:0.8rem;">
+                        <span>CGST (<span id="cgst-rate-lbl">0</span>%):</span>
+                        <span id="cgst-amt">₹ 0.00</span>
+                    </div>
+                    <div class="summary-row" style="color:#64748b; font-size:0.8rem;">
+                        <span>SGST (<span id="sgst-rate-lbl">0</span>%):</span>
+                        <span id="sgst-amt">₹ 0.00</span>
+                    </div>
+                    <div class="summary-row" style="font-weight:600; font-size:0.82rem; color:#334155;">
+                        <span>Total GST (<span id="total-gst-rate-lbl">0</span>%):</span>
+                        <span id="total-gst-amt">₹ 0.00</span>
+                    </div>
+                </div>
+
+                <div class="summary-row" style="font-size: 1rem; font-weight:bold; color: var(--primary); margin-top: 6px; border-top:1px solid #cbd5e1; padding-top:4px;">
                     <span>Grand Total:</span>
                     <span id="grand-total">₹0.00</span>
                 </div>
@@ -301,44 +311,61 @@
                 <div id="cash-mode-fields">
                     <div class="summary-row">
                         <label>Cash Received:</label>
-                        <input type="number" id="cash-given" placeholder="₹0" oninput="calculateBalance()" onkeydown="onlyNumbers(event)">
+                        <input type="number" id="cash-given" placeholder="₹ 0" oninput="calculateBalance()" onkeydown="onlyNumbers(event)">
                     </div>
                     <div class="summary-row">
                         <span>Balance:</span>
-                        <strong id="cash-balance" style="color:var(--danger);">₹0.00</strong>
+                        <strong id="cash-balance" style="color:var(--danger);">₹ 0.00</strong>
                     </div>
                 </div>
 
                 <div id="split-mode-fields" style="display:none;">
                     <div class="summary-row">
                         <label>Cash Part:</label>
-                        <input type="number" id="split-cash" placeholder="₹0" oninput="calculateSplit()" onkeydown="onlyNumbers(event)">
+                        <input type="number" id="split-cash" placeholder="₹ 0" oninput="calculateSplit()" onkeydown="onlyNumbers(event)">
                     </div>
                     <div class="summary-row">
                         <label>Online Part:</label>
-                        <input type="number" id="split-online" placeholder="₹0" readonly style="background:#e2e8f0;">
+                        <input type="number" id="split-online" placeholder="₹ 0" readonly style="background:#e2e8f0;">
                     </div>
                 </div>
             </div>
 
-            <!-- Customer Info Fields (Optional) -->
+            <!-- SEPARATE WHATSAPP NUMBER INPUT ENTER BOX ABOVE -->
+            <div id="whatsapp-info-container" class="cust-section" style="background:#f0fdf4; border-color:#bbf7d0;">
+                <h4 style="color:#166534;">💬 WhatsApp Bill Contact</h4>
+                <input type="tel" id="wa-phone" maxlength="10" placeholder="Enter 10-Digit WhatsApp Mobile No." 
+                       onkeypress="return isOnlyDigitKey(event)" 
+                       oninput="sanitizeDigitsOnly(this); syncPhoneToCust(this.value);" 
+                       style="padding:10px; border:1px solid #86efac; border-radius:6px; font-size:0.9rem; width:100%; background:white;">
+            </div>
+
+            <!-- Customer Info Fields - Strict One By One Sequence Layout -->
             <div id="customer-info-container" class="cust-section">
                 <h4>👤 Customer Info (Optional)</h4>
                 <div class="cust-grid">
-                    <input type="text" id="cust-name" placeholder="Customer Name" style="padding:8px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.85rem; width:100%;">
+                    <!-- 1. Name -->
+                    <div class="cust-field">
+                        <label for="cust-name">1. Name</label>
+                        <input type="text" id="cust-name" placeholder="Enter Customer Name">
+                    </div>
+
+                    <!-- 2. Phone No -->
+                    <div class="cust-field">
+                        <label for="cust-phone">2. Phone No</label>
+                        <input type="tel" id="cust-phone" maxlength="10" placeholder="Enter Mobile No." 
+                               onkeypress="return isOnlyDigitKey(event)" 
+                               oninput="sanitizeDigitsOnly(this); syncCustToPhone(this.value);">
+                    </div>
                     
-                    <!-- Strictly Numbers Only Phone Input -->
-                    <input type="tel" id="cust-phone" maxlength="10" placeholder="10-Digit Mobile / WhatsApp No." 
-                           onkeypress="return isOnlyDigitKey(event)" 
-                           oninput="sanitizeDigitsOnly(this)" 
-                           style="padding:8px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.85rem; width:100%;">
-                    
-                    <!-- Gender Tick Box Options -->
-                    <div class="gender-checkbox-container">
-                        <span style="font-weight: 500;">Gender:</span>
-                        <label><input type="checkbox" name="cust-gender-cb" value="Male" onclick="selectGenderCheckbox(this)"> Male</label>
-                        <label><input type="checkbox" name="cust-gender-cb" value="Female" onclick="selectGenderCheckbox(this)"> Female</label>
-                        <label><input type="checkbox" name="cust-gender-cb" value="Other" onclick="selectGenderCheckbox(this)"> Other</label>
+                    <!-- 3. Gender -->
+                    <div class="cust-field">
+                        <label>3. Gender</label>
+                        <div class="gender-checkbox-container">
+                            <label><input type="checkbox" name="cust-gender-cb" value="Male" onclick="selectGenderCheckbox(this)"> Male</label>
+                            <label><input type="checkbox" name="cust-gender-cb" value="Female" onclick="selectGenderCheckbox(this)"> Female</label>
+                            <label><input type="checkbox" name="cust-gender-cb" value="Other" onclick="selectGenderCheckbox(this)"> Other</label>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -471,19 +498,49 @@
     <div id="branding-modal" class="modal">
         <div class="modal-content">
             <h3 style="margin-bottom:10px; font-size: 1rem;">Settings & Customizations</h3>
+            
+            <!-- Store Profile Section -->
             <div class="input-group">
                 <label style="font-size:0.75rem; font-weight:bold;">Store Name:</label>
                 <input type="text" id="brand-name-input">
                 <label style="font-size:0.75rem; font-weight:bold;">Slogan:</label>
                 <input type="text" id="brand-slogan-input">
+                <label style="font-size:0.75rem; font-weight:bold;">GST NO. (Optional):</label>
+                <input type="text" id="store-gstin-input" placeholder="e.g. 33AAAAA0000A1Z5">
                 <label style="font-size:0.75rem; font-weight:bold;">Upload Store Logo:</label>
                 <input type="file" id="brand-logo-file" accept="image/*" style="font-size:0.8rem;">
+            </div>
+
+            <!-- Address & Contact Info Section -->
+            <hr style="margin: 10px 0; border: none; border-top: 1px solid #e2e8f0;">
+            <h4 style="font-size: 0.85rem; margin-bottom: 6px;">📍 Store Address & Contact Info</h4>
+            <div class="input-group">
+                <input type="text" id="store-address-input" placeholder="Address (Street / Building)">
+                <div style="display:flex; gap:6px;">
+                    <input type="text" id="store-city-input" placeholder="City">
+                    <input type="text" id="store-pincode-input" placeholder="Pincode">
+                </div>
+                <input type="text" id="store-state-input" placeholder="State">
+                <input type="text" id="store-phone-input" placeholder="Store Contact Phone No.">
+                <input type="email" id="store-email-input" placeholder="Store Email ID (Optional)">
+            </div>
+
+            <!-- GST Settings Section -->
+            <hr style="margin: 10px 0; border: none; border-top: 1px solid #e2e8f0;">
+            <h4 style="font-size: 0.85rem; margin-bottom: 6px;">🧾 GST Tax Settings</h4>
+            <div style="display:flex; flex-direction:column; gap:8px; font-size:0.8rem;">
+                <label><input type="checkbox" id="cfg-enable-gst" onchange="toggleGstSettingsInput()"> Enable GST Calculation</label>
+                <div id="gst-rate-box" style="display:flex; align-items:center; gap:8px;">
+                    <label style="font-weight:bold;">GST Rate (%):</label>
+                    <input type="number" id="cfg-gst-rate" placeholder="e.g. 5, 12, 18" style="width:100px; padding:6px; border:1px solid #cbd5e1; border-radius:6px;">
+                </div>
             </div>
 
             <hr style="margin: 10px 0; border: none; border-top: 1px solid #e2e8f0;">
             <h4 style="font-size: 0.85rem; margin-bottom: 6px;">Order Settings</h4>
             <div style="display:flex; flex-direction:column; gap:6px; font-size:0.8rem;">
                 <label><input type="checkbox" id="cfg-show-customer"> Enable Customer Info Field</label>
+                <label><input type="checkbox" id="cfg-print-cust-on-bill"> Print Customer Info On Bill</label>
                 <label><input type="checkbox" id="cfg-show-discount"> Enable Discount Field</label>
             </div>
 
@@ -523,6 +580,7 @@
         <div style="text-align: center; margin-bottom: 15px;">
             <h2 id="exp-header-title" style="margin:0; font-size: 18px; color: #1e293b;">Store Name</h2>
             <p id="exp-header-sub" style="margin:2px 0 0 0; font-size: 12px; color: #64748b;">Sales Report</p>
+            <p id="exp-header-addr" style="margin:2px 0 0 0; font-size: 10px; color: #64748b;"></p>
         </div>
         <table>
             <thead>
@@ -535,6 +593,9 @@
                     <th>Items</th>
                     <th>Subtotal</th>
                     <th id="exp-th-discount">Discount</th>
+                    <th id="exp-th-cgst">CGST</th>
+                    <th id="exp-th-sgst">SGST</th>
+                    <th id="exp-th-gst">Total GST</th>
                     <th>Grand Total</th>
                     <th>Mode</th>
                 </tr>
@@ -548,20 +609,21 @@
         <div style="text-align: center; margin-bottom: 15px;">
             <h2 id="analytics-exp-title" style="margin:0; font-size: 18px; color: #1e293b;">Store Name</h2>
             <p id="analytics-exp-subtitle" style="margin:2px 0 0 0; font-size: 12px; color: #64748b;">Live Analytics & Product Sales Report</p>
+            <p id="analytics-exp-address" style="margin:2px 0 0 0; font-size: 10px; color: #64748b;"></p>
         </div>
 
         <div style="display: flex; justify-content: space-around; background: #f8fafc; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; margin-bottom: 15px; text-align: center;">
             <div>
                 <div style="font-size: 10px; color: #64748b;">TOTAL SALES</div>
-                <div id="analytics-exp-total" style="font-size: 14px; font-weight: bold; color: #2563eb;">₹0.00</div>
+                <div id="analytics-exp-total" style="font-size: 14px; font-weight: bold; color: #2563eb;">₹ 0.00</div>
             </div>
             <div>
                 <div style="font-size: 10px; color: #64748b;">CASH RECD.</div>
-                <div id="analytics-exp-cash" style="font-size: 14px; font-weight: bold; color: #16a34a;">₹0.00</div>
+                <div id="analytics-exp-cash" style="font-size: 14px; font-weight: bold; color: #16a34a;">₹ 0.00</div>
             </div>
             <div>
                 <div style="font-size: 10px; color: #64748b;">ONLINE RECD.</div>
-                <div id="analytics-exp-online" style="font-size: 14px; font-weight: bold; color: #4338ca;">₹0.00</div>
+                <div id="analytics-exp-online" style="font-size: 14px; font-weight: bold; color: #4338ca;">₹ 0.00</div>
             </div>
         </div>
 
@@ -603,6 +665,15 @@
             name: "My Smart POS",
             slogan: "Fast Mobile Billing",
             logo: "",
+            gstin: "",
+            address: "",
+            city: "",
+            pincode: "",
+            state: "",
+            phone: "",
+            email: "",
+            enableGst: false,
+            gstRate: 5,
             showWhatsapp: true,
             showPrint: true,
             showSave: true,
@@ -610,8 +681,25 @@
             showExpPdf: true,
             showExpImg: true,
             showDiscount: true,
-            showCustomerInfo: true
+            showCustomerInfo: true,
+            printCustOnBill: false
         };
+
+        function formatDateDDMMYYYYWithTime(dateObj) {
+            const d = dateObj || new Date();
+            const day = String(d.getDate()).padStart(2, '0');
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const year = d.getFullYear();
+            
+            let hours = d.getHours();
+            const minutes = String(d.getMinutes()).padStart(2, '0');
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12;
+            hours = hours ? hours : 12; // convert 0 to 12
+            const strHours = String(hours).padStart(2, '0');
+
+            return `${day}/${month}/${year} ${strHours}:${minutes} ${ampm}`;
+        }
 
         /* Numeric Key Check */
         function onlyNumbers(e) {
@@ -633,6 +721,15 @@
         /* Strict Sanitizer to strip non-digit characters on Paste or Input */
         function sanitizeDigitsOnly(inputElem) {
             inputElem.value = inputElem.value.replace(/[^0-9]/g, '');
+        }
+
+        /* Synchronization between Phone fields */
+        function syncPhoneToCust(val) {
+            document.getElementById('cust-phone').value = val;
+        }
+
+        function syncCustToPhone(val) {
+            document.getElementById('wa-phone').value = val;
         }
 
         /* Single Selection Helper for Gender Checkboxes */
@@ -673,7 +770,17 @@
             document.querySelectorAll('.nav-tab').forEach(n => n.classList.remove('active'));
 
             document.getElementById(`view-${tabName}`).classList.add('active');
-            elem.classList.add('active');
+            if (elem) elem.classList.add('active');
+        }
+
+        function goToOrderView() {
+            let tabs = document.querySelectorAll('.nav-tab');
+            switchView('order', tabs[1]);
+        }
+
+        function goToMenuView() {
+            let tabs = document.querySelectorAll('.nav-tab');
+            switchView('menu', tabs[0]);
         }
 
         /* CATEGORIES MANAGEMENT */
@@ -801,7 +908,13 @@
         }
 
         function applyButtonVisibility() {
-            document.getElementById('btn-action-whatsapp').style.display = storeConfig.showWhatsapp !== false ? 'block' : 'none';
+            let waBtn = document.getElementById('btn-action-whatsapp');
+            let waBox = document.getElementById('whatsapp-info-container');
+            let isWaShown = storeConfig.showWhatsapp !== false;
+
+            waBtn.style.display = isWaShown ? 'block' : 'none';
+            waBox.style.display = isWaShown ? 'block' : 'none';
+
             document.getElementById('btn-action-print').style.display = storeConfig.showPrint !== false ? 'block' : 'none';
             document.getElementById('btn-action-save').style.display = storeConfig.showSave !== false ? 'block' : 'none';
 
@@ -825,11 +938,30 @@
             document.getElementById('customer-info-container').style.display = isCustInfoEnabled ? 'block' : 'none';
         }
 
+        function toggleGstSettingsInput() {
+            let isGst = document.getElementById('cfg-enable-gst').checked;
+            document.getElementById('gst-rate-box').style.display = isGst ? 'flex' : 'none';
+        }
+
         function openBrandingModal() {
-            document.getElementById('brand-name-input').value = storeConfig.name;
-            document.getElementById('brand-slogan-input').value = storeConfig.slogan;
+            document.getElementById('brand-name-input').value = storeConfig.name || '';
+            document.getElementById('brand-slogan-input').value = storeConfig.slogan || '';
+            document.getElementById('store-gstin-input').value = storeConfig.gstin || '';
+            
+            document.getElementById('store-address-input').value = storeConfig.address || '';
+            document.getElementById('store-city-input').value = storeConfig.city || '';
+            document.getElementById('store-pincode-input').value = storeConfig.pincode || '';
+            document.getElementById('store-state-input').value = storeConfig.state || '';
+            document.getElementById('store-phone-input').value = storeConfig.phone || '';
+            document.getElementById('store-email-input').value = storeConfig.email || '';
+
+            document.getElementById('cfg-enable-gst').checked = storeConfig.enableGst === true;
+            document.getElementById('cfg-gst-rate').value = storeConfig.gstRate || 5;
+            toggleGstSettingsInput();
+
             document.getElementById('cfg-show-discount').checked = storeConfig.showDiscount !== false;
             document.getElementById('cfg-show-customer').checked = storeConfig.showCustomerInfo !== false;
+            document.getElementById('cfg-print-cust-on-bill').checked = storeConfig.printCustOnBill === true;
 
             document.getElementById('cfg-btn-whatsapp').checked = storeConfig.showWhatsapp !== false;
             document.getElementById('cfg-btn-print').checked = storeConfig.showPrint !== false;
@@ -871,10 +1003,22 @@
         function saveBranding() {
             let name = document.getElementById('brand-name-input').value.trim();
             let slogan = document.getElementById('brand-slogan-input').value.trim();
+            let gstin = document.getElementById('store-gstin-input').value.trim();
             let fileInput = document.getElementById('brand-logo-file');
+
+            let address = document.getElementById('store-address-input').value.trim();
+            let city = document.getElementById('store-city-input').value.trim();
+            let pincode = document.getElementById('store-pincode-input').value.trim();
+            let state = document.getElementById('store-state-input').value.trim();
+            let phone = document.getElementById('store-phone-input').value.trim();
+            let email = document.getElementById('store-email-input').value.trim();
+
+            let enableGst = document.getElementById('cfg-enable-gst').checked;
+            let gstRate = parseFloat(document.getElementById('cfg-gst-rate').value) || 0;
 
             let showDisc = document.getElementById('cfg-show-discount').checked;
             let showCust = document.getElementById('cfg-show-customer').checked;
+            let printCust = document.getElementById('cfg-print-cust-on-bill').checked;
 
             let showWa = document.getElementById('cfg-btn-whatsapp').checked;
             let showPr = document.getElementById('cfg-btn-print').checked;
@@ -894,8 +1038,21 @@
 
             if (name) storeConfig.name = name;
             if (slogan) storeConfig.slogan = slogan;
+            storeConfig.gstin = gstin;
+            
+            storeConfig.address = address;
+            storeConfig.city = city;
+            storeConfig.pincode = pincode;
+            storeConfig.state = state;
+            storeConfig.phone = phone;
+            storeConfig.email = email;
+
+            storeConfig.enableGst = enableGst;
+            storeConfig.gstRate = gstRate;
+
             storeConfig.showDiscount = showDisc;
             storeConfig.showCustomerInfo = showCust;
+            storeConfig.printCustOnBill = printCust;
             storeConfig.showWhatsapp = showWa;
             storeConfig.showPrint = showPr;
             storeConfig.showSave = showSa;
@@ -910,6 +1067,7 @@
                 applyButtonVisibility();
                 applyDiscountVisibility();
                 applyCustomerInfoVisibility();
+                calculateBill();
                 closeBrandingModal();
             };
 
@@ -923,6 +1081,25 @@
             } else {
                 finalizeSave();
             }
+        }
+
+        function getFullStoreAddress() {
+            let parts = [];
+            if (storeConfig.address) parts.push(storeConfig.address);
+            if (storeConfig.city) parts.push(storeConfig.city);
+            if (storeConfig.pincode) parts.push(storeConfig.pincode);
+            if (storeConfig.state) parts.push(storeConfig.state);
+            
+            let addrStr = parts.join(', ');
+            let contactParts = [];
+            if (storeConfig.gstin) contactParts.push(`GSTIN: ${storeConfig.gstin}`);
+            if (storeConfig.phone) contactParts.push(`Ph: ${storeConfig.phone}`);
+            if (storeConfig.email) contactParts.push(`Mail: ${storeConfig.email}`);
+
+            let contactStr = contactParts.join(' | ');
+
+            if (addrStr && contactStr) return `${addrStr}<br>${contactStr}`;
+            return addrStr || contactStr;
         }
 
         function getNextBillNo() {
@@ -968,7 +1145,7 @@
                     <img src="${imgSrc}" alt="${item.name}">
                     <h4>${item.name}</h4>
                     <div class="cat-label">${item.category || 'General'}</div>
-                    <div class="price">₹${item.price}</div>
+                    <div class="price">₹ ${item.price}</div>
                     <div class="qty-controls">
                         <button class="btn-qty" onclick="updateQty(${item.id}, -1)">-</button>
                         <span style="font-size:0.85rem;">${qty}</span>
@@ -1073,8 +1250,8 @@
                 <tr>
                     <td>${item.name}</td>
                     <td>${item.qty}</td>
-                    <td>₹${item.price}</td>
-                    <td>₹${item.qty * item.price}</td>
+                    <td>₹ ${item.price}</td>
+                    <td>₹ ${item.qty * item.price}</td>
                 </tr>`;
             }).join('');
 
@@ -1085,9 +1262,38 @@
             let subTotal = Object.values(cart).reduce((sum, item) => sum + (item.price * item.qty), 0);
             let isDiscountEnabled = storeConfig.showDiscount !== false;
             let discountPct = isDiscountEnabled ? (parseFloat(document.getElementById('discount-pct').value) || 0) : 0;
-            let grandTotal = subTotal - (subTotal * (discountPct / 100));
+            
+            let discountedSubtotal = subTotal - (subTotal * (discountPct / 100));
 
-            document.getElementById('sub-total').innerText = `₹${subTotal.toFixed(2)}`;
+            let totalGstAmt = 0;
+            let cgstAmt = 0;
+            let sgstAmt = 0;
+            let gstRate = storeConfig.gstRate || 0;
+
+            let gstBox = document.getElementById('gst-breakdown-box');
+            if (storeConfig.enableGst && gstRate > 0) {
+                totalGstAmt = discountedSubtotal * (gstRate / 100);
+                cgstAmt = totalGstAmt / 2;
+                sgstAmt = totalGstAmt / 2;
+
+                document.getElementById('cgst-rate-lbl').innerText = (gstRate / 2);
+                document.getElementById('sgst-rate-lbl').innerText = (gstRate / 2);
+                document.getElementById('total-gst-rate-lbl').innerText = gstRate;
+
+                document.getElementById('cgst-amt').innerText = `₹ ${cgstAmt.toFixed(2)}`;
+                document.getElementById('sgst-amt').innerText = `₹ ${sgstAmt.toFixed(2)}`;
+                document.getElementById('total-gst-amt').innerText = `₹ ${totalGstAmt.toFixed(2)}`;
+
+                gstBox.style.display = 'block';
+            } else {
+                gstBox.style.display = 'none';
+            }
+
+            let grandTotal = discountedSubtotal + totalGstAmt;
+
+            document.getElementById('sub-total').innerText = `₹ ${subTotal.toFixed(2)}`;
+            
+            /* Print Whatsapp Bill Only Grand Total ( Eg ₹100 ₹without Space Enter Amount ) */
             document.getElementById('grand-total').innerText = `₹${grandTotal.toFixed(2)}`;
 
             calculateBalance();
@@ -1116,10 +1322,10 @@
             let balanceElem = document.getElementById('cash-balance');
             if (diff >= 0) {
                 balanceElem.style.color = "var(--success)";
-                balanceElem.innerText = `Give ₹${diff.toFixed(2)}`;
+                balanceElem.innerText = `Give ₹ ${diff.toFixed(2)}`;
             } else {
                 balanceElem.style.color = "var(--danger)";
-                balanceElem.innerText = `Gets ₹${Math.abs(diff).toFixed(2)}`;
+                balanceElem.innerText = `Gets ₹ ${Math.abs(diff).toFixed(2)}`;
             }
         }
 
@@ -1141,16 +1347,26 @@
             let discount = isDiscountEnabled ? (parseFloat(document.getElementById('discount-pct').value) || 0) : 0;
             let grandTotal = parseFloat(document.getElementById('grand-total').innerText.replace('₹',''));
             
+            let discountedSubtotal = subTotal - (subTotal * (discount / 100));
+            let totalGstAmt = 0;
+            let cgstAmt = 0;
+            let sgstAmt = 0;
+            let gstRate = storeConfig.enableGst ? (storeConfig.gstRate || 0) : 0;
+
+            if (gstRate > 0) {
+                totalGstAmt = discountedSubtotal * (gstRate / 100);
+                cgstAmt = totalGstAmt / 2;
+                sgstAmt = totalGstAmt / 2;
+            }
+
             // Customer Details Input
             let custName = document.getElementById('cust-name').value.trim();
-            let phone = document.getElementById('cust-phone').value.trim();
-            
-            // Gender Checkbox Reading
+            let phone = document.getElementById('wa-phone').value.trim() || document.getElementById('cust-phone').value.trim();
             let custGender = getSelectedGender();
 
             if (actionType === 'whatsapp') {
                 if (!phone || phone.length !== 10 || isNaN(phone)) {
-                    return alert("Please enter a valid 10-digit WhatsApp number!");
+                    return alert("Please enter a valid 10-digit WhatsApp Mobile No. in the enter box above!");
                 }
             }
 
@@ -1164,7 +1380,7 @@
             } else if (paymentMode === 'Split') {
                 cashVal = parseFloat(document.getElementById('split-cash').value) || 0;
                 onlineVal = parseFloat(document.getElementById('split-online').value) || 0;
-                paymentDetail = `Split (Cash: ₹${cashVal}, Online: ₹${onlineVal})`;
+                paymentDetail = `Split (Cash: ₹ ${cashVal}, Online: ₹ ${onlineVal})`;
             }
 
             let billId = activeEditingBillId ? activeEditingBillId : getNextBillNo();
@@ -1180,6 +1396,10 @@
                 items: items,
                 subTotal: subTotal,
                 discount: discount,
+                gstRate: gstRate,
+                cgstAmt: cgstAmt,
+                sgstAmt: sgstAmt,
+                totalGstAmt: totalGstAmt,
                 grandTotal: grandTotal,
                 paymentMode: paymentDetail,
                 cashAmount: cashVal,
@@ -1209,6 +1429,7 @@
             document.getElementById('discount-pct').value = 0;
             document.getElementById('cash-given').value = '';
             document.getElementById('split-cash').value = '';
+            document.getElementById('wa-phone').value = '';
             document.getElementById('cust-name').value = '';
             document.getElementById('cust-phone').value = '';
             setSelectedGender("");
@@ -1221,15 +1442,26 @@
 
         function sendWhatsAppBill(order, phone) {
             let isDiscountEnabled = storeConfig.showDiscount !== false;
-            let itemLines = order.items.map(i => `• ${i.name} x ${i.qty} = ₹${i.price * i.qty}`).join('\n');
+            
+            /* Other Amount Are ( Eg ₹ 100 ₹with Space Enter Amount ) */
+            let itemLines = order.items.map(i => `• ${i.name} x ${i.qty} = ₹ ${i.price * i.qty}`).join('\n');
             let discountLine = isDiscountEnabled ? `\n*Discount:* ${order.discount}%` : '';
             
+            let gstLine = '';
+            if (order.gstRate > 0) {
+                gstLine = `\n*CGST (${order.gstRate / 2}%):* ₹ ${order.cgstAmt.toFixed(2)}\n*SGST (${order.gstRate / 2}%):* ₹ ${order.sgstAmt.toFixed(2)}\n*Total GST (${order.gstRate}%):* ₹ ${order.totalGstAmt.toFixed(2)}`;
+            }
+
             let custHeader = '';
-            if (order.custName || order.custGender) {
+            if (storeConfig.printCustOnBill && (order.custName || order.custGender)) {
                 custHeader = `\n*Customer:* ${order.custName || 'N/A'} ${order.custGender ? '(' + order.custGender + ')' : ''}`;
             }
 
-            let message = `*${storeConfig.name}*\n${storeConfig.slogan}\n----------------------------\n*Bill #:* ${order.id}${custHeader}\n*Date:* ${order.date}\n----------------------------\n${itemLines}\n----------------------------\n*Subtotal:* ₹${order.subTotal}${discountLine}\n*Grand Total:* ₹${order.grandTotal}\n*Payment Mode:* ${order.paymentMode}\n----------------------------\nThank you!`;
+            let fullAddr = getFullStoreAddress();
+            let addrClean = fullAddr ? `\n${fullAddr.replace(/<br>/g, '\n')}` : '';
+
+            /* Print Whatsapp Bill Only Grand Total ( Eg ₹100 ₹without Space Enter Amount ) */
+            let message = `*${storeConfig.name}*\n${storeConfig.slogan}${addrClean}\n----------------------------\n*Bill #:* ${order.id}${custHeader}\n*Date:* ${order.date}\n----------------------------\n${itemLines}\n----------------------------\n*Subtotal:* ₹ ${order.subTotal.toFixed(2)}${discountLine}${gstLine}\n*Grand Total:* ₹${order.grandTotal.toFixed(2)}\n*Payment Mode:* ${order.paymentMode}\n----------------------------\nThank you!`;
             
             let encodedMsg = encodeURIComponent(message);
             window.open(`https://wa.me/91${phone}?text=${encodedMsg}`, '_blank');
@@ -1241,8 +1473,17 @@
             let isDiscountEnabled = storeConfig.showDiscount !== false;
             let discountRow = isDiscountEnabled ? `<tr><td>Discount:</td><td>${order.discount}%</td></tr>` : '';
 
+            let gstRows = '';
+            if (order.gstRate > 0) {
+                gstRows = `
+                    <tr><td>CGST (${order.gstRate / 2}%):</td><td>₹ ${order.cgstAmt.toFixed(2)}</td></tr>
+                    <tr><td>SGST (${order.gstRate / 2}%):</td><td>₹ ${order.sgstAmt.toFixed(2)}</td></tr>
+                    <tr><td>Total GST (${order.gstRate}%):</td><td>₹ ${order.totalGstAmt.toFixed(2)}</td></tr>
+                `;
+            }
+
             let custDetailsHTML = '';
-            if (order.custName || order.custPhone || order.custGender) {
+            if (storeConfig.printCustOnBill && (order.custName || order.custPhone || order.custGender)) {
                 custDetailsHTML = `
                     <div class="divider"></div>
                     ${order.custName ? `<p style="text-align:left;">Cust: ${order.custName}</p>` : ''}
@@ -1251,13 +1492,17 @@
                 `;
             }
 
+            let storeAddressHTML = getFullStoreAddress();
+            let printDateStr = formatDateDDMMYYYYWithTime(order.timestamp ? new Date(order.timestamp) : new Date(order.date));
+
             container.innerHTML = `
                 ${logoHTML}
                 <h3>${storeConfig.name}</h3>
                 <p>${storeConfig.slogan}</p>
+                ${storeAddressHTML ? `<p style="font-size:9px;">${storeAddressHTML}</p>` : ''}
                 <div class="divider"></div>
                 <p>Bill #: ${order.id}</p>
-                <p>Date: ${order.date}</p>
+                <p>Date: ${printDateStr}</p>
                 ${custDetailsHTML}
                 <div class="divider"></div>
                 <table>
@@ -1269,15 +1514,16 @@
                             <tr>
                                 <td>${i.name}</td>
                                 <td>x${i.qty}</td>
-                                <td>₹${i.price * i.qty}</td>
+                                <td>₹ ${i.price * i.qty}</td>
                             </tr>
                         `).join('')}
                     </tbody>
                 </table>
                 <div class="divider"></div>
                 <table>
-                    <tr><td>Subtotal:</td><td>₹${order.subTotal.toFixed(2)}</td></tr>
+                    <tr><td>Subtotal:</td><td>₹ ${order.subTotal.toFixed(2)}</td></tr>
                     ${discountRow}
+                    ${gstRows}
                     <tr><td><strong>Grand Total:</strong></td><td><strong>₹${order.grandTotal.toFixed(2)}</strong></td></tr>
                     <tr><td>Payment:</td><td>${order.paymentMode}</td></tr>
                 </table>
@@ -1300,11 +1546,14 @@
 
             let container = document.getElementById('thermal-receipt');
             let logoHTML = storeConfig.logo ? `<img src="${storeConfig.logo}">` : '';
+            let storeAddressHTML = getFullStoreAddress();
+            let printDateStr = formatDateDDMMYYYYWithTime(new Date());
 
             container.innerHTML = `
                 ${logoHTML}
                 <h3>${storeConfig.name}</h3>
                 <p>SALES ANALYTICS REPORT</p>
+                ${storeAddressHTML ? `<p style="font-size:9px;">${storeAddressHTML}</p>` : ''}
                 <p>Period: ${filterLabel}</p>
                 <div class="divider"></div>
                 <table>
@@ -1324,13 +1573,13 @@
                             <tr>
                                 <td>${p}</td>
                                 <td>x${productStats[p].qty}</td>
-                                <td>₹${productStats[p].revenue.toFixed(2)}</td>
+                                <td>₹ ${productStats[p].revenue.toFixed(2)}</td>
                             </tr>
                         `).join('')}
                     </tbody>
                 </table>
                 <div class="divider"></div>
-                <p style="text-align:center;">Printed On: ${new Date().toLocaleString()}</p>
+                <p style="text-align:center;">Printed On: ${printDateStr}</p>
             `;
 
             window.print();
@@ -1427,7 +1676,7 @@
                     <td>${s.date}</td>
                     <td><span style="font-size:0.75rem; color:#475569;">${displayCust}</span></td>
                     <td>${s.items.map(i => `${i.name}(${i.qty})`).join(', ')}</td>
-                    <td>₹${s.grandTotal}</td>
+                    <td>₹${s.grandTotal.toFixed(2)}</td>
                     <td>
                         <span class="badge ${s.paymentMode.startsWith('Cash') ? 'badge-cash' : (s.paymentMode.startsWith('Online') ? 'badge-online' : 'badge-split')}">
                             ${s.paymentMode}
@@ -1460,9 +1709,9 @@
                 }
             });
 
-            document.getElementById('stat-total-sales').innerText = `₹${totalSales.toFixed(2)}`;
-            document.getElementById('stat-cash-sales').innerText = `₹${cashTotal.toFixed(2)}`;
-            document.getElementById('stat-online-sales').innerText = `₹${onlineTotal.toFixed(2)}`;
+            document.getElementById('stat-total-sales').innerText = `₹ ${totalSales.toFixed(2)}`;
+            document.getElementById('stat-cash-sales').innerText = `₹ ${cashTotal.toFixed(2)}`;
+            document.getElementById('stat-online-sales').innerText = `₹ ${onlineTotal.toFixed(2)}`;
 
             let pContainer = document.getElementById('product-stats-container');
             let keys = Object.keys(productStats);
@@ -1476,7 +1725,7 @@
                 <div class="product-stat-card">
                     <div class="p-name">${pName}</div>
                     <div style="margin-top:2px; color:#334155;">Qty: <strong>${productStats[pName].qty}</strong></div>
-                    <div style="color:var(--primary); font-weight:bold;">₹${productStats[pName].revenue.toFixed(2)}</div>
+                    <div style="color:var(--primary); font-weight:bold;">₹ ${productStats[pName].revenue.toFixed(2)}</div>
                 </div>
             `).join('');
         }
@@ -1497,6 +1746,7 @@
             document.getElementById('discount-pct').value = bill.discount || 0;
             document.getElementById('cust-name').value = bill.custName || '';
             document.getElementById('cust-phone').value = bill.custPhone || '';
+            document.getElementById('wa-phone').value = bill.custPhone || '';
             setSelectedGender(bill.custGender || '');
 
             renderMenu();
@@ -1520,6 +1770,7 @@
             document.getElementById('analytics-exp-title').innerText = storeConfig.name;
             let filterLabel = document.getElementById('date-filter-preset').selectedOptions[0].text;
             document.getElementById('analytics-exp-subtitle').innerText = `Analytics & Product Sales Report - (${filterLabel})`;
+            document.getElementById('analytics-exp-address').innerHTML = getFullStoreAddress();
 
             document.getElementById('analytics-exp-total').innerText = document.getElementById('stat-total-sales').innerText;
             document.getElementById('analytics-exp-cash').innerText = document.getElementById('stat-cash-sales').innerText;
@@ -1536,7 +1787,7 @@
                     <tr>
                         <td><strong>${pName}</strong></td>
                         <td>${productStats[pName].qty}</td>
-                        <td>₹${productStats[pName].revenue.toFixed(2)}</td>
+                        <td>₹ ${productStats[pName].revenue.toFixed(2)}</td>
                     </tr>
                 `).join('');
             }
@@ -1556,10 +1807,11 @@
             }));
 
             let summaryData = [
+                { "Metric": "Store Name", "Value": storeConfig.name },
                 { "Metric": "Filter Period", "Value": filterLabel },
-                { "Metric": "Total Sales (INR)", "Value": document.getElementById('stat-total-sales').innerText.replace('₹','') },
-                { "Metric": "Cash Received (INR)", "Value": document.getElementById('stat-cash-sales').innerText.replace('₹','') },
-                { "Metric": "Online Received (INR)", "Value": document.getElementById('stat-online-sales').innerText.replace('₹','') }
+                { "Metric": "Total Sales (INR)", "Value": document.getElementById('stat-total-sales').innerText.replace('₹','').trim() },
+                { "Metric": "Cash Received (INR)", "Value": document.getElementById('stat-cash-sales').innerText.replace('₹','').trim() },
+                { "Metric": "Online Received (INR)", "Value": document.getElementById('stat-online-sales').innerText.replace('₹','').trim() }
             ];
 
             let workbook = XLSX.utils.book_new();
@@ -1641,6 +1893,11 @@
                 if (isDiscountEnabled) {
                     row["Discount (%)"] = s.discount;
                 }
+                if (s.gstRate > 0) {
+                    row["CGST (INR)"] = s.cgstAmt;
+                    row["SGST (INR)"] = s.sgstAmt;
+                    row["Total GST (INR)"] = s.totalGstAmt;
+                }
                 row["Grand Total (INR)"] = s.grandTotal;
                 row["Payment Method"] = s.paymentMode;
 
@@ -1658,9 +1915,15 @@
             document.getElementById('exp-header-title').innerText = storeConfig.name;
             let filterLabel = document.getElementById('date-filter-preset').selectedOptions[0].text;
             document.getElementById('exp-header-sub').innerText = `Sales Report - (${filterLabel})`;
+            document.getElementById('exp-header-addr').innerHTML = getFullStoreAddress();
 
             let isDiscountEnabled = storeConfig.showDiscount !== false;
             document.getElementById('exp-th-discount').style.display = isDiscountEnabled ? 'table-cell' : 'none';
+
+            let hasGstInList = filteredList.some(s => s.gstRate > 0);
+            document.getElementById('exp-th-cgst').style.display = hasGstInList ? 'table-cell' : 'none';
+            document.getElementById('exp-th-sgst').style.display = hasGstInList ? 'table-cell' : 'none';
+            document.getElementById('exp-th-gst').style.display = hasGstInList ? 'table-cell' : 'none';
 
             let expTbody = document.getElementById('export-tbody');
             expTbody.innerHTML = filteredList.map(s => `
@@ -1671,8 +1934,13 @@
                     <td>${s.custPhone || '-'}</td>
                     <td>${s.custGender || '-'}</td>
                     <td>${s.items.map(i => `${i.name} (${i.qty})`).join(', ')}</td>
-                    <td>₹${s.subTotal.toFixed(2)}</td>
+                    <td>₹ ${s.subTotal.toFixed(2)}</td>
                     ${isDiscountEnabled ? `<td>${s.discount}%</td>` : ''}
+                    ${hasGstInList ? `
+                        <td>₹ ${s.cgstAmt ? s.cgstAmt.toFixed(2) : '0.00'}</td>
+                        <td>₹ ${s.sgstAmt ? s.sgstAmt.toFixed(2) : '0.00'}</td>
+                        <td>₹ ${s.totalGstAmt ? s.totalGstAmt.toFixed(2) : '0.00'}</td>
+                    ` : ''}
                     <td><strong>₹${s.grandTotal.toFixed(2)}</strong></td>
                     <td>${s.paymentMode}</td>
                 </tr>
