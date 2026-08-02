@@ -280,6 +280,78 @@
         /* Animation for Refresh Button */
         .spin-icon { animation: spin 0.6s ease-in-out; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        /* ================= LIGHT / DARK MODE TOGGLE SWITCH ================= */
+        .theme-switch { position: relative; display: inline-block; width: 44px; height: 24px; flex-shrink: 0; }
+        .theme-switch input { opacity: 0; width: 0; height: 0; }
+        .theme-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; border-radius: 24px; transition: 0.2s; }
+        .theme-slider::before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; border-radius: 50%; transition: 0.2s; }
+        .theme-switch input:checked + .theme-slider { background-color: var(--primary); }
+        .theme-switch input:checked + .theme-slider::before { transform: translateX(20px); }
+
+        /* ================= DARK MODE THEME ================= */
+        body[data-theme="dark"] {
+            --bg: #0f172a;
+            --card: #1e293b;
+            --text: #e2e8f0;
+        }
+        body[data-theme="dark"] .branding p,
+        body[data-theme="dark"] .cat-label,
+        body[data-theme="dark"] .analytics-card h4,
+        body[data-theme="dark"] .cust-field label,
+        body[data-theme="dark"] .cust-section h4,
+        body[data-theme="dark"] .nav-tab { color: #94a3b8; }
+
+        body[data-theme="dark"] .branding img { border-color: #334155; }
+
+        body[data-theme="dark"] .cat-chip { background: #334155; color: #cbd5e1; }
+        body[data-theme="dark"] .cat-chip.active { background: var(--primary); color: white; }
+
+        body[data-theme="dark"] .filter-container,
+        body[data-theme="dark"] .analytics-card,
+        body[data-theme="dark"] .menu-item,
+        body[data-theme="dark"] .bill-summary,
+        body[data-theme="dark"] .cust-section,
+        body[data-theme="dark"] .export-option-btn,
+        body[data-theme="dark"] .theme-switch + div,
+        body[data-theme="dark"] #theme-mode-label,
+        body[data-theme="dark"] div[style*="background:var(--bg)"] { background: #1e293b; border-color: #334155; }
+
+        body[data-theme="dark"] .product-stat-card { background: #1e3a5f; border-color: #2d5586; }
+        body[data-theme="dark"] .product-stat-card .p-name { color: #93c5fd; }
+
+        body[data-theme="dark"] .pay-option { border-color: #334155; color: #e2e8f0; }
+        body[data-theme="dark"] .pay-option.active { background: #1e3a5f; border-color: var(--primary); color: #93c5fd; }
+
+        body[data-theme="dark"] .input-group input,
+        body[data-theme="dark"] .input-group select,
+        body[data-theme="dark"] .cust-field input,
+        body[data-theme="dark"] .filter-select,
+        body[data-theme="dark"] .custom-date-box input,
+        body[data-theme="dark"] .summary-row input,
+        body[data-theme="dark"] .gender-checkbox-container {
+            background: #0f172a; border-color: #334155; color: #e2e8f0;
+        }
+        body[data-theme="dark"] .gender-checkbox-container { color: #cbd5e1; }
+
+        body[data-theme="dark"] .cart-table th, body[data-theme="dark"] .cart-table td,
+        body[data-theme="dark"] .history-table th, body[data-theme="dark"] .history-table td { border-color: #334155; }
+        body[data-theme="dark"] .history-table th { background: #0f172a; }
+
+        body[data-theme="dark"] .modal { background: rgba(0,0,0,0.7); }
+        body[data-theme="dark"] .modal-content { background: #1e293b; color: #e2e8f0; }
+
+        body[data-theme="dark"] .bottom-nav { background: #1e293b; border-top-color: #334155; box-shadow: 0 -2px 10px rgba(0,0,0,0.3); }
+        body[data-theme="dark"] .nav-tab.active { color: var(--primary); }
+
+        body[data-theme="dark"] hr { border-top-color: #334155 !important; }
+
+        body[data-theme="dark"] .btn-secondary { background: #475569; }
+        body[data-theme="dark"] .upi-qr-card { background: #1e293b; border-color: #3b82f6; }
+        body[data-theme="dark"] .upi-qr-card #qrcode-box { background: #ffffff; }
+
+        /* Keep printable/export/thermal-receipt areas white regardless of theme */
+        #export-wrapper, #analytics-export-wrapper, #thermal-receipt { background: #ffffff !important; color: #000 !important; }
     </style>
 </head>
 <body>
@@ -415,7 +487,7 @@
                 <h4 style="font-size: 0.85rem; color: #1e40af; margin-bottom: 6px;">📱 Scan QR Code to Pay</h4>
                 <div id="qrcode-box"></div>
                 <div style="font-size: 0.75rem; color: #475569; margin-top: 6px; font-weight: 600;">
-                    UPI ID: <span id="display-upi-id" style="color: var(--primary);">vadivarasan2020@oksbi</span>
+                    UPI ID: <span id="display-upi-id" style="color: var(--primary);">YOUR@UPI-ID</span>
                 </div>
                 <div style="font-size: 0.8rem; font-weight: bold; color: var(--success); margin-top: 2px;">
                     Amount: <span id="display-qr-amount">₹0.00</span>
@@ -628,7 +700,7 @@
                         <input type="checkbox" id="cfg-enable-upi-qr"> Enable QR Code
                     </label>
                 </div>
-                <input type="text" id="brand-upi-input" placeholder="e.g. vadivarasan2020@oksbi">
+                <input type="text" id="brand-upi-input" placeholder="e.g. YOUR@UPI-ID">
                 
                 <label style="font-size:0.75rem; font-weight:bold;">GST NO. (Optional):</label>
                 <input type="text" id="store-gstin-input" placeholder="e.g. 33AAAAA0000A1Z5">
@@ -667,6 +739,17 @@
                 <label><input type="checkbox" id="cfg-show-customer"> Enable Customer Info Field</label>
                 <label><input type="checkbox" id="cfg-print-cust-on-bill"> Print Customer Info On Bill</label>
                 <label><input type="checkbox" id="cfg-show-discount"> Enable Discount Field</label>
+            </div>
+
+            <!-- Display / Theme Settings Section -->
+            <hr style="margin: 10px 0; border: none; border-top: 1px solid #e2e8f0;">
+            <h4 style="font-size: 0.85rem; margin-bottom: 6px;">🎨 Display Settings</h4>
+            <div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg); padding:10px; border-radius:8px; border:1px solid #e2e8f0;">
+                <span style="font-size:0.85rem; font-weight:600;" id="theme-mode-label">☀️ Light Mode</span>
+                <label class="theme-switch">
+                    <input type="checkbox" id="cfg-dark-mode" onchange="setTheme(this.checked ? 'dark' : 'light')">
+                    <span class="theme-slider"></span>
+                </label>
             </div>
 
             <hr style="margin: 10px 0; border: none; border-top: 1px solid #e2e8f0;">
@@ -810,7 +893,7 @@
         let storeConfig = JSON.parse(localStorage.getItem('pos_config')) || {
             name: "My Smart POS",
             slogan: "Fast Mobile Billing",
-            upiId: "vadivarasan2020@oksbi",
+            upiId: "YOUR@UPI-ID",
             enableUpiQr: true,
             logo: "",
             gstin: "",
@@ -861,7 +944,7 @@
 
         /* Dynamic Standard UPI QR Code Generator Helper (Google Pay Compatible) */
         function generateUpiQrCode(amount) {
-            let upiId = (storeConfig.upiId || "vadivarasan2020@oksbi").trim();
+            let upiId = (storeConfig.upiId || "YOUR@UPI-ID").trim();
             let rawName = storeConfig.name || "Merchant";
             let name = encodeURIComponent(rawName);
             let amtVal = parseFloat(amount || 0).toFixed(2);
@@ -1107,6 +1190,7 @@
         }
 
         function initApp() {
+            initTheme();
             applyBranding();
             applyButtonVisibility();
             applyDiscountVisibility();
@@ -1125,6 +1209,21 @@
         window.onload = function() {
             initApp();
         };
+
+        /* ================= LIGHT / DARK MODE ================= */
+        function setTheme(mode) {
+            document.body.setAttribute('data-theme', mode);
+            localStorage.setItem('pos_theme', mode);
+            const label = document.getElementById('theme-mode-label');
+            const checkbox = document.getElementById('cfg-dark-mode');
+            if (label) label.textContent = mode === 'dark' ? '🌙 Dark Mode' : '☀️ Light Mode';
+            if (checkbox) checkbox.checked = (mode === 'dark');
+        }
+
+        function initTheme() {
+            const saved = localStorage.getItem('pos_theme') || 'light';
+            setTheme(saved);
+        }
 
         function switchView(tabName, elem) {
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
@@ -1309,7 +1408,7 @@
         function openBrandingModal() {
             document.getElementById('brand-name-input').value = storeConfig.name || '';
             document.getElementById('brand-slogan-input').value = storeConfig.slogan || '';
-            document.getElementById('brand-upi-input').value = storeConfig.upiId || 'vadivarasan2020@oksbi';
+            document.getElementById('brand-upi-input').value = storeConfig.upiId || 'YOUR@UPI-ID';
             document.getElementById('cfg-enable-upi-qr').checked = storeConfig.enableUpiQr !== false;
             document.getElementById('store-gstin-input').value = storeConfig.gstin || '';
             
@@ -1412,7 +1511,7 @@
 
             if (name) storeConfig.name = name;
             if (slogan) storeConfig.slogan = slogan;
-            storeConfig.upiId = upiId || "vadivarasan2020@oksbi";
+            storeConfig.upiId = upiId || "YOUR@UPI-ID";
             storeConfig.enableUpiQr = enableUpiQr;
             storeConfig.gstin = gstin;
             
